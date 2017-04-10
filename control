@@ -1,0 +1,9 @@
+Package: com.tonyciroussel.nocturne
+Name: Nocturne
+Depends: mobilesubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: Make iPhone darker!
+Maintainer: Tony Ciroussel
+Author: Tony Ciroussel
+Section: Tweaks
