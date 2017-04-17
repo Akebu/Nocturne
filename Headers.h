@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #define CellBackgroundColor ColorWithRGB(33,47,61)
 #define TableViewBackgroundColor ColorWithRGB(28,40,51);
 #define CellTextColor ColorWithWhite(0.90);

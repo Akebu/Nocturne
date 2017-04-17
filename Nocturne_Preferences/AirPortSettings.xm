@@ -1,7 +1,4 @@
 #import "../Headers.h"
-#include <pthread.h>
-static pthread_once_t airportHooksAreInit = PTHREAD_ONCE_INIT;
-static void initAirPortSettingsHooks();
 
 %group AirPortSettingsAPTableCell
 	%hook APTableCell
@@ -38,16 +35,14 @@ static void initAirPortSettingsHooks();
 {
 	%orig;
 	if([self class] == objc_getClass("APNetworksController")){
-		pthread_once(&airportHooksAreInit, initAirPortSettingsHooks);
+		static dispatch_once_t p = 0;
+		dispatch_once(&p, ^{
+			%init(AirPortSettingsAPTableCell, APTableCell = objc_getClass("APTableCell"));
+			%init(AirPortSettingsGroupHeader, APNetworksGroupHeader = objc_getClass("APNetworksGroupHeader"));
+		});
 	}
 }
 %end
-
-void initAirPortSettingsHooks()
-{
-	%init(AirPortSettingsAPTableCell, APTableCell = objc_getClass("APTableCell"));
-	%init(AirPortSettingsGroupHeader, APNetworksGroupHeader = objc_getClass("APNetworksGroupHeader"));
-}
 
 %ctor
 {

@@ -1,8 +1,5 @@
 #import "../Headers.h"
 
-static pthread_once_t modemHooksAreInit = PTHREAD_ONCE_INIT;
-static void initModemSettingsHooks();
-
 %group WirelessModemSettings
 	%hook TetheringSwitchFooterView
 	-(void)layoutSubviews
@@ -48,16 +45,14 @@ static void initModemSettingsHooks();
 {
 	%orig;
 	if([self class] == objc_getClass("WirelessModemController")){
-		pthread_once(&modemHooksAreInit, initModemSettingsHooks);
+		static dispatch_once_t p = 0;
+		dispatch_once(&p, ^{
+			%init(WirelessModemSettings, TetheringSwitchFooterView = objc_getClass("TetheringSwitchFooterView"));
+			%init(WirelessModemSetupInstructions, SetupView = objc_getClass("SetupView"));
+		});
 	}
 }
 %end
-
-void initModemSettingsHooks()
-{
-	%init(WirelessModemSettings, TetheringSwitchFooterView = objc_getClass("TetheringSwitchFooterView"));
-	%init(WirelessModemSetupInstructions, SetupView = objc_getClass("SetupView"));
-}
 
 %ctor
 {
