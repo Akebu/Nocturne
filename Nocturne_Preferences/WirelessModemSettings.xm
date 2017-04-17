@@ -4,7 +4,6 @@
 	%hook TetheringSwitchFooterView
 	-(void)layoutSubviews
 	{
-		%log;
 		%orig;
 		NSMutableArray *allLabels = MSHookIvar<NSMutableArray *>(self, "_labels");
 		for(UILabel *label in allLabels){
@@ -26,7 +25,6 @@
 
 	-(void)setIcon:(UIImage *)image
 	{
-		/* http://stackoverflow.com/a/22669888 */
 		%orig([image invertColors]);
 	}
 

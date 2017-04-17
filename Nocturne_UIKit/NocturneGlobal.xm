@@ -1,36 +1,47 @@
 #import "../Headers.h"
 
-void (*cellPtr)(id, SEL, UITableViewCell *);
-void (*headerViewPtr)(id, SEL, UIView *);
-void (*footerViewPtr)(id, SEL, UIView *);
-
-void nocturneAddTableViewDelegateCellMethod(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath){}
-void nocturneAddTableViewDelegateHeaderMethod(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSInteger *indexPath){}
-void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath){}
-
-%group NocturneTableViewHook
-
-	%hook TableViewDelegate
-	- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
-	{
-		[self nocturneCustomizeCell:cell];
-	}
-
-	- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section
-	{
-		[self nocturneCustomizeFooterView:view];
-	}
-
-	- (void)tableView:(UITableView *)tableView willDisplayFooterView:(UIView *)view forSection:(NSInteger)section
-	{
-		[self nocturneCustomizeHeaderView:view];
-	}
-	%end
-
-%end
-
 %group Applications
 
+static NSMutableArray *delegateList = [[NSMutableArray alloc] init];
+static IMP original_UITableViewDelegate_willDisplayCell_;
+static IMP original_UITableViewDelegate_HeaderView_;
+static IMP original_UITableViewDelegate_FooterView_;
+
+void (*customizeCellPtr)(id, SEL, UITableView *, UITableViewCell *,NSIndexPath *);
+void (*customizeHeaderPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
+void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
+
+void nocturneAddTableViewDelegateCellMethod(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath){ return ; } 
+void nocturneAddTableViewDelegateHeaderMethod(id self, SEL _cmd, UITableView *tableView, UIView *cell, NSInteger *indexPath){ return ; }
+void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *tableView, UIView *cell, NSInteger *indexPath){ return ; }
+
+/* === Common modifications === */
+void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
+{
+	original_UITableViewDelegate_willDisplayCell_(self, _cmd, tableView, cell, indexPath);	// %orig;
+	cell.backgroundColor = CellBackgroundColor;
+	cell.textLabel.textColor = CellTextColor;
+	cell.detailTextLabel.textColor = CellDetailTextColor;
+}
+
+void nocturneCommonUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
+{
+	original_UITableViewDelegate_HeaderView_(self, _cmd, tableView, view, index);			// %orig;
+	if ([view respondsToSelector:@selector(textLabel)]){
+		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewHeaderTextColor
+	}
+}
+
+void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
+{
+	original_UITableViewDelegate_FooterView_(self, _cmd, tableView, view, index);			// %orig;
+	if ([view respondsToSelector:@selector(textLabel)]){
+		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewFooterTextColor
+	}
+}
+/* === === === */
+
+/* === Hooks === */
 %hook UITableView
 - (void)setDelegate:(id)delegate
 {
@@ -44,11 +55,14 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 		class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)nocturneAddTableViewDelegateFooterMethod, "@@:@@");
 	}
 
-	class_addMethod([delegate class], @selector(nocturneCustomizeCell:), (IMP)cellPtr, "@@:@");
-	class_addMethod([delegate class], @selector(nocturneCustomizeFooterView:), (IMP)footerViewPtr, "@@:@");
-	class_addMethod([delegate class], @selector(nocturneCustomizeHeaderView:), (IMP)headerViewPtr, "@@:@");
-
-	%init(NocturneTableViewHook, TableViewDelegate = [delegate class]);
+	if(delegate != nil && ![delegateList containsObject:NSStringFromClass([delegate class])]){
+		/* Call MSHookMessageEx twice on the same delegate class will crash the application */
+		MSHookMessageEx([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, (IMP *)&original_UITableViewDelegate_willDisplayCell_);
+		MSHookMessageEx([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, (IMP *)&original_UITableViewDelegate_HeaderView_);
+		MSHookMessageEx([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, (IMP *)&original_UITableViewDelegate_FooterView_);
+		/* Add the delegate to the list, so it will never be executed again */
+		[delegateList addObject:NSStringFromClass ([delegate class])];
+	}
 	%orig;
 }
 
@@ -66,35 +80,17 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 
 %end
 
-%hook UIViewController
-- (void)viewDidLoad
+%hook UIApplication
+-(void)setStatusBarStyle:(int)style
 {
+	style = UIStatusBarStyleLightContent;
 	%orig;
-	[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
-
-	[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
-	[UINavigationBar appearance].tintColor = OrangeColor;
-
-	[UITableView appearance].backgroundColor = TableViewBackgroundColor;
-	[UITableViewCell appearance].tintColor = BlueColor;
-			
-	[UISwitch appearance].tintColor = ColorWithWhite(0.50);
-	[UISwitch appearance].onTintColor = GreenColor;
-	[UISwitch appearance].thumbTintColor = ColorWithRGB(214,219,223);
-
-	[UISearchBar appearance].translucent = YES;
-	[UISearchBar appearance].barTintColor = ColorWithRGB(33,47,61);
-
-	[UISegmentedControl appearance].tintColor = BlueColor;
-
-	[UIActivityIndicatorView appearance].color = ColorWithWhite(0.70);
-
-	[UITextField appearance].keyboardAppearance = UIKeyboardAppearanceDark;
 }
 %end
 
-%end
+/* === === === */
 
+%end
 
 %ctor
 {
@@ -104,12 +100,31 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 		if([bundleID isEqualToString:@"com.apple.springboard"]){
 
 		}else{
+
 			%init(Applications);
 
-			/* Common modifications */
-			cellPtr = &notcurneCommonUITableViewCellModifications;
-			headerViewPtr = &nocturneCommonUITableViewHeaderModification;
-			footerViewPtr = &nocturneCommonUITableViewFooterModification;
+			customizeCellPtr = &notcurneCommonUITableViewCellModifications;
+			customizeHeaderPtr = &nocturneCommonUITableViewHeaderModification;
+			customizeFooterPtr = &nocturneCommonUITableViewFooterModification;
+
+			[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
+			[UINavigationBar appearance].tintColor = OrangeColor;
+
+			[UITableView appearance].backgroundColor = TableViewBackgroundColor;
+			[UITableViewCell appearance].tintColor = BlueColor;
+					
+			[UISwitch appearance].tintColor = ColorWithWhite(0.50);
+			[UISwitch appearance].onTintColor = GreenColor;
+			[UISwitch appearance].thumbTintColor = ColorWithRGB(214,219,223);
+
+			[UISearchBar appearance].translucent = YES;
+			[UISearchBar appearance].barTintColor = ColorWithRGB(33,47,61);
+
+			[UISegmentedControl appearance].tintColor = BlueColor;
+
+			[UIActivityIndicatorView appearance].color = ColorWithWhite(0.70);
+
+			[UITextField appearance].keyboardAppearance = UIKeyboardAppearanceDark;
 		}
 	}	
 }

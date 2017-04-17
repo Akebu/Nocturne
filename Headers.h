@@ -12,11 +12,6 @@
 #define ColorWithRGB(r,g,b) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:1];
 #define ColorWithWhite(w) [UIColor colorWithWhite:w alpha:1];
 
-/* Alls */
-extern void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableViewCell *cell);
-extern void nocturneCommonUITableViewHeaderModification(id self, SEL _cmd, UIView *view);
-extern void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UIView *view);
-
 @interface UITableViewDelegate
 -(void) nocturneCustomizeCell:(UITableViewCell *)cell;
 -(void) nocturneCustomizeHeaderView:(UIView *)view;

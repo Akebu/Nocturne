@@ -6,7 +6,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = Nocturne_Preferences
 Nocturne_Preferences_FILES = AirPortSettings.xm WirelessModemSettings.xm
 Nocturne_Preferences_LDFLAGS += -Wl,-segalign,4000
-Nocturne_Preferences_FRAMEWORKS = UIKit CoreImage
+Nocturne_Preferences_FRAMEWORKS = UIKit
 
 include $(THEOS)/makefiles/tweak.mk
 
