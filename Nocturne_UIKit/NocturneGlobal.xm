@@ -1,45 +1,16 @@
 #import "../Headers.h"
 
-%group Applications
-
 static NSMutableArray *delegateList = [[NSMutableArray alloc] init];
-static IMP original_UITableViewDelegate_willDisplayCell_;
-static IMP original_UITableViewDelegate_HeaderView_;
-static IMP original_UITableViewDelegate_FooterView_;
 
 void (*customizeCellPtr)(id, SEL, UITableView *, UITableViewCell *,NSIndexPath *);
 void (*customizeHeaderPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
+%group Applications 
+
 void nocturneAddTableViewDelegateCellMethod(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath){ return ; } 
 void nocturneAddTableViewDelegateHeaderMethod(id self, SEL _cmd, UITableView *tableView, UIView *cell, NSInteger *indexPath){ return ; }
 void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *tableView, UIView *cell, NSInteger *indexPath){ return ; }
-
-/* === Common modifications === */
-void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
-{
-	original_UITableViewDelegate_willDisplayCell_(self, _cmd, tableView, cell, indexPath);	// %orig;
-	cell.backgroundColor = CellBackgroundColor;
-	cell.textLabel.textColor = CellTextColor;
-	cell.detailTextLabel.textColor = CellDetailTextColor;
-}
-
-void nocturneCommonUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
-{
-	original_UITableViewDelegate_HeaderView_(self, _cmd, tableView, view, index);			// %orig;
-	if ([view respondsToSelector:@selector(textLabel)]){
-		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewHeaderTextColor
-	}
-}
-
-void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
-{
-	original_UITableViewDelegate_FooterView_(self, _cmd, tableView, view, index);			// %orig;
-	if ([view respondsToSelector:@selector(textLabel)]){
-		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewFooterTextColor
-	}
-}
-/* === === === */
 
 /* === Hooks === */
 %hook UITableView
@@ -61,8 +32,9 @@ void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UITableView 
 		MSHookMessageEx([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, (IMP *)&original_UITableViewDelegate_HeaderView_);
 		MSHookMessageEx([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, (IMP *)&original_UITableViewDelegate_FooterView_);
 		/* Add the delegate to the list, so it will never be executed again */
-		[delegateList addObject:NSStringFromClass ([delegate class])];
+		[delegateList addObject:NSStringFromClass([delegate class])];
 	}
+
 	%orig;
 }
 
@@ -72,10 +44,39 @@ void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UITableView 
 
 - (void)_setupSelectedBackgroundView
 {
-	UIView *selectionColor = [[UIView alloc] init];
-	selectionColor.backgroundColor = ColorWithRGB(93,109,126);
+	%orig;
+	UIView *selectionColor = [[UIView alloc] initWithFrame:self.frame];
+	selectionColor.backgroundColor = CellSelectedColor;
 	self.selectedBackgroundView = selectionColor;
+	[self bringSubviewToFront:selectionColor];
 	[selectionColor release];
+}
+
+%end
+
+%hook UITextField
+
+- (void)setTextColor:(UIColor *)color
+{
+	if([self backgroundColor] == [UIColor clearColor]){
+		color = ColorWithWhite(0.70);
+	}
+	%orig;
+}
+
+- (UIImage *)_clearButtonImageForState:(unsigned int)arg1
+{
+	UIImage *clearButtonImage = %orig;
+	clearButtonImage = [clearButtonImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+	return clearButtonImage;
+}
+
+- (void)setBackgroundColor:(UIColor *)color
+{
+	if(color == [UIColor clearColor]){
+		self.tintColor = ColorWithWhite(0.90);
+	}
+	%orig;
 }
 
 %end
@@ -101,7 +102,7 @@ void nocturneCommonUITableViewFooterModification(id self, SEL _cmd, UITableView 
 
 		}else{
 
-			%init(Applications);
+			%init(Applications); 
 
 			customizeCellPtr = &notcurneCommonUITableViewCellModifications;
 			customizeHeaderPtr = &nocturneCommonUITableViewHeaderModification;
