@@ -30,13 +30,6 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 
-@interface UITableViewDelegate
--(void) nocturneCustomizeCell:(UITableViewCell *)cell;
--(void) nocturneCustomizeHeaderView:(UIView *)view;
--(void) nocturneCustomizeFooterView:(UIView *)view;
--(void) nocturneSelectRowAtIndexPath:(NSIndexPath *)indexPath;
-@end
-
 @interface UIImage (invertColors)
 - (UIImage *)invertColors;
 @end
