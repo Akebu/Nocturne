@@ -38,6 +38,25 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 	%orig;
 }
 
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	[self setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
+}
+
+- (void)setBackgroundView:(UIView *)view
+{
+	view.backgroundColor = TableViewBackgroundColor;
+	%orig;
+}
+
+- (UIView *)_defaultBackgroundView
+{
+	UIView *defaultView = [[[UIView alloc] initWithFrame:self.frame] autorelease];
+	[self setBackgroundView:defaultView];
+	return defaultView;
+}
+
 %end
 
 %hook UITableViewCell
@@ -48,7 +67,6 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 	UIView *selectionColor = [[UIView alloc] initWithFrame:self.frame];
 	selectionColor.backgroundColor = CellSelectedColor;
 	self.selectedBackgroundView = selectionColor;
-	[self bringSubviewToFront:selectionColor];
 	[selectionColor release];
 }
 
@@ -59,7 +77,7 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 - (void)setTextColor:(UIColor *)color
 {
 	if([self backgroundColor] == [UIColor clearColor]){
-		color = ColorWithWhite(0.70);
+		color = VeryLightTextColor;
 	}
 	%orig;
 }
@@ -74,7 +92,7 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 - (void)setBackgroundColor:(UIColor *)color
 {
 	if(color == [UIColor clearColor]){
-		self.tintColor = ColorWithWhite(0.90);
+		self.tintColor = TextColor;
 	}
 	%orig;
 }
@@ -104,9 +122,20 @@ void nocturneAddTableViewDelegateFooterMethod(id self, SEL _cmd, UITableView *ta
 
 			%init(Applications); 
 
-			customizeCellPtr = &notcurneCommonUITableViewCellModifications;
-			customizeHeaderPtr = &nocturneCommonUITableViewHeaderModification;
-			customizeFooterPtr = &nocturneCommonUITableViewFooterModification;
+			if([bundleID isEqualToString:@"com.apple.Preferences"]){
+
+				customizeFooterPtr = &nocturnePreferencesUITableViewFooterModification;
+			}
+
+			if(!customizeCellPtr){
+				customizeCellPtr = &notcurneCommonUITableViewCellModifications;
+			}
+			if(!customizeHeaderPtr){
+				customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
+			}
+			if(!customizeFooterPtr){
+				customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
+			}
 
 			[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
 			[UINavigationBar appearance].tintColor = OrangeColor;

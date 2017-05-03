@@ -26,7 +26,7 @@
 	-(void)addStep:(id)step
 	{
 		UILabel *titleLabel = MSHookIvar<UILabel *>(self, "_title");
-		titleLabel.textColor = ColorWithWhite(0.90);
+		titleLabel.textColor = TextColor;
 		%orig;
 	}
 
@@ -38,7 +38,7 @@
 	-(id)_preferenceLabelWithText:(id)arg1
 	{
 		UILabel *setupLabel = %orig;
-		setupLabel.textColor = ColorWithWhite(0.72);
+		setupLabel.textColor = LightTextColor;
 		return setupLabel;
 	}
 
@@ -53,11 +53,11 @@
 		%orig;
 		UIImageView *lockView = MSHookIvar<UIImageView *>(self, "_lockView");
 		lockView.image = [lockView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-		lockView.tintColor = ColorWithWhite(0.90);
+		lockView.tintColor = TextColor;
 
 		lockView = MSHookIvar<UIImageView *>(self, "_barsView");
 		lockView.image = [lockView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-		lockView.tintColor = ColorWithWhite(0.90);
+		lockView.tintColor = TextColor;
 	}
 	%end
 %end
