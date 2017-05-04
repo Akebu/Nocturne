@@ -101,9 +101,15 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 	%orig;
 }
 
+- (id)_placeholderColor
+{
+	return ColorWithWhite(0.35);
+}
+
 %end
 
 %hook UIApplication
+
 -(void)setStatusBarStyle:(int)style
 {
 	%orig(UIStatusBarStyleLightContent);

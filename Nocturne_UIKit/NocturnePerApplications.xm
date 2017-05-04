@@ -24,6 +24,7 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
 	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
+
 	UITextView *possibleUITextView = [[view subviews] firstObject];
 	if([possibleUITextView class] == [UITextView class]){
 
@@ -47,6 +48,15 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 		possibleUITextView.attributedText = footerAttributedString;
 		possibleUITextView.tintColor = BlueColor;
 		[footerAttributedString release];
+	}
+	else
+	{
+		for(id label in [view subviews]){
+			if([label respondsToSelector:@selector(setTextColor:)])
+			{
+				((UILabel *)label).textColor = TableViewFooterTextColor;
+			}
+		}
 	}
 }
 

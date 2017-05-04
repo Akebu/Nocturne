@@ -8,6 +8,11 @@
 -(UIImageView *)selectionImage;
 @end
 
+@interface PSSpecifier
+- (id)propertyForKey:(id)arg1;
+- (void)setProperty:(id)prop forKey:(id)key;
+@end
+
 %group WirelessModemSettings
 	%hook TetheringSwitchFooterView
 	-(void)layoutSubviews
@@ -107,6 +112,30 @@
 
 %end
 
+%group PSUIPrefsListController
+
+	%hook PSUIPrefsListController
+
+	-(NSMutableArray *) specifiers
+	{
+		NSMutableArray *specifiers = %orig;
+		for(PSSpecifier *specifier in specifiers){
+			NSBundle *specifierBundle = ((NSBundle *)[specifier propertyForKey:@"pl_bundle"]);
+			if(specifierBundle){
+				NSString *bundlePath = [specifierBundle bundlePath];
+				if([bundlePath rangeOfString:@"PreferenceLoader"].location != NSNotFound){
+					UIImage *iconImage = [specifier propertyForKey:@"iconImage"];
+					if([iconImage isDark])
+						[specifier setProperty:[iconImage invertColors] forKey:@"iconImage"];
+				}
+			}
+		}
+		return specifiers;
+	}
+
+	%end
+%end
+
 %hook PSListController
 - (void)_loadBundleControllers
 {
@@ -119,19 +148,25 @@
 			%init(WirelessModemSetupInstructions, SetupView = objc_getClass("SetupView"));
 		});
 	}
-	if([self class] == objc_getClass("APNetworksController")){
+	else if([self class] == objc_getClass("APNetworksController")){
 		static dispatch_once_t b = 0;
 		dispatch_once(&b, ^{
 			%init(AirPortSettingsAPTableCell, APTableCell = objc_getClass("APTableCell"));
 			%init(AirPortSettingsGroupHeader, APNetworksGroupHeader = objc_getClass("APNetworksGroupHeader"));
 		});
 	}
-	if([self class] == objc_getClass("BulletinBoardAppDetailController")){
+	else if([self class] == objc_getClass("BulletinBoardAppDetailController")){
 		static dispatch_once_t c = 0;
 		dispatch_once(&c, ^{
 			%init(NotificationsExplanationFooterView, NotificationsExplanationView = objc_getClass("NotificationsExplanationView"));
 			%init(AlertStyleView, AlertStyleView = objc_getClass("AlertStyleView"));
 		});
+	}
+	else if([self class] == objc_getClass("PSUIPrefsListController")){
+		static dispatch_once_t d = 0;
+		dispatch_once(&d, ^{
+			%init(PSUIPrefsListController, PSUIPrefsListController = objc_getClass("PSUIPrefsListController"));
+		});	
 	}
 }
 %end
@@ -140,4 +175,3 @@
 {
 	%init;
 }
-

@@ -32,4 +32,9 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 
 @interface UIImage (invertColors)
 - (UIImage *)invertColors;
+- (BOOL) isDark;
+@end
+
+@interface UISlider ()
+- (id)_minValueView;
 @end
