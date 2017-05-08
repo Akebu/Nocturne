@@ -1,12 +1,16 @@
 #import "../Headers.h"
 
+static BOOL isInTweakPref;
+
 /* === Common modifications === */
 
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	cell.backgroundColor = CellBackgroundColor;
+	cell.backgroundColor = CellBackgroundColor; 
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
+
+
 }
 
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
@@ -20,6 +24,41 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 /* === === === */
 
 /* === Preferences.app === */
+
+void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
+{
+	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
+	if(isInTweakPref){
+		UIImage *icon = cell.imageView.image;
+		if([icon isDark]){
+			cell.imageView.image = [icon invertColors];
+		}
+	}
+	if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
+		PUAlbumListCellContentView *cellView = cell.contentView.subviews[0];
+		UILabel *label = [cellView _subtitleLabel];
+		label.backgroundColor = [UIColor clearColor];
+		label.textColor = LightTextColor;
+
+		UITextField *textField = [cellView _titleTextField];
+		textField.backgroundColor = [UIColor clearColor];
+		textField.textColor = TextColor;
+	}
+}
+
+void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
+{
+	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
+	if(isInTweakPref){
+		if(view.frame.size.height > 55){
+			for(id label in [view subviews]){
+				if([label class] == [UILabel class]){
+					((UILabel *)label).textColor = TableViewHeaderTextColor;
+				}
+			}
+		}
+	}
+}
 
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
@@ -60,4 +99,15 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 	}
 }
 
+/* === === === */
+
+/* === Communication === */
+@implementation NocturneController
+
++ (void)isInTweakPref:(BOOL)state
+{
+	isInTweakPref = state;
+}
+
+@end
 /* === === === */

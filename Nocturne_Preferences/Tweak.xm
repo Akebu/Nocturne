@@ -105,11 +105,25 @@
 		id styleView = %orig;
 		UIImageView *selectionImage = [self selectionImage];
 		selectionImage.image = [selectionImage.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-		selectionImage.tintColor = NotificationSelectionColor;
+		selectionImage.tintColor = LightBlueColor;
 		return styleView;
 	}
 	%end
 
+%end
+
+%group WallpaperMagicTableCategoryLabel
+
+	%hook WallpaperMagicTableCategoryLabel
+
+	-(id)initWithFrame:(CGRect)arg1
+	{
+		UILabel *label = %orig;
+		label.textColor = TableViewFooterTextColor;
+		return label;
+	}
+
+	%end
 %end
 
 %group PSUIPrefsListController
@@ -118,57 +132,92 @@
 
 	-(NSMutableArray *) specifiers
 	{
+		static dispatch_once_t sp;
 		NSMutableArray *specifiers = %orig;
-		for(PSSpecifier *specifier in specifiers){
-			NSBundle *specifierBundle = ((NSBundle *)[specifier propertyForKey:@"pl_bundle"]);
-			if(specifierBundle){
-				NSString *bundlePath = [specifierBundle bundlePath];
-				if([bundlePath rangeOfString:@"PreferenceLoader"].location != NSNotFound){
-					UIImage *iconImage = [specifier propertyForKey:@"iconImage"];
-					if([iconImage isDark])
-						[specifier setProperty:[iconImage invertColors] forKey:@"iconImage"];
+		dispatch_once(&sp, ^{
+			for(PSSpecifier *specifier in specifiers){
+				NSBundle *specifierBundle = ((NSBundle *)[specifier propertyForKey:@"pl_bundle"]);
+				if(specifierBundle){
+					NSString *bundlePath = [specifierBundle bundlePath];
+					if([bundlePath rangeOfString:@"PreferenceLoader"].location != NSNotFound){
+						UIImage *iconImage = [specifier propertyForKey:@"iconImage"];
+						if([iconImage isDark])
+							[specifier setProperty:[iconImage invertColors] forKey:@"iconImage"];
+					}
 				}
 			}
-		}
+		});
 		return specifiers;
 	}
 
 	%end
+
 %end
 
 %hook PSListController
-- (void)_loadBundleControllers
+
+- (void)viewWillAppear:(bool)arg1
 {
 	%orig;
 
+	NSString *bundlePath = [[self bundle] bundlePath];
+	NSString *bundlePathSource = [[bundlePath stringByDeletingLastPathComponent] lastPathComponent];
+
+	if([bundlePathSource rangeOfString:@"Preference"].location != NSNotFound){
+		[%c(NocturneController) isInTweakPref:YES];
+	}else{
+		[%c(NocturneController) isInTweakPref:NO];
+	}
+}
+
+- (void)_loadBundleControllers
+{
+	%orig;
+	//HBLogInfo(@"%@", [self class]);
+	
 	if([self class] == objc_getClass("WirelessModemController")){
-		static dispatch_once_t a = 0;
+		static dispatch_once_t a;
 		dispatch_once(&a, ^{
 			%init(WirelessModemSettings, TetheringSwitchFooterView = objc_getClass("TetheringSwitchFooterView"));
 			%init(WirelessModemSetupInstructions, SetupView = objc_getClass("SetupView"));
 		});
 	}
 	else if([self class] == objc_getClass("APNetworksController")){
-		static dispatch_once_t b = 0;
+		static dispatch_once_t b;
 		dispatch_once(&b, ^{
 			%init(AirPortSettingsAPTableCell, APTableCell = objc_getClass("APTableCell"));
 			%init(AirPortSettingsGroupHeader, APNetworksGroupHeader = objc_getClass("APNetworksGroupHeader"));
 		});
 	}
 	else if([self class] == objc_getClass("BulletinBoardAppDetailController")){
-		static dispatch_once_t c = 0;
+		static dispatch_once_t c;
 		dispatch_once(&c, ^{
 			%init(NotificationsExplanationFooterView, NotificationsExplanationView = objc_getClass("NotificationsExplanationView"));
 			%init(AlertStyleView, AlertStyleView = objc_getClass("AlertStyleView"));
 		});
 	}
 	else if([self class] == objc_getClass("PSUIPrefsListController")){
-		static dispatch_once_t d = 0;
+		static dispatch_once_t d;
 		dispatch_once(&d, ^{
 			%init(PSUIPrefsListController, PSUIPrefsListController = objc_getClass("PSUIPrefsListController"));
 		});	
 	}
+	else if([self class] == objc_getClass("WallpaperController")){
+		static dispatch_once_t e;
+		dispatch_once(&e, ^{
+			void *isHandled = dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_PhotosUI.dylib", RTLD_LAZY);
+			if(isHandled){
+				%init(WallpaperMagicTableCategoryLabel, WallpaperMagicTableCategoryLabel = objc_getClass("WallpaperMagicTableCategoryLabel"));
+				dlclose(isHandled);
+			}
+		});
+	}
 }
+
+/*- (void)_unloadBundleControllers
+{
+}*/
+
 %end
 
 %ctor

@@ -25,7 +25,7 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 			class_addMethod([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, "@@:@@");
 		}
 		else
-		{
+		{ 
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, (IMP *)&original_UITableViewDelegate_HeaderView_);
 		}
 
@@ -108,6 +108,10 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 %end
 
+%hook UIStackView
+
+%end
+
 %hook UIApplication
 
 -(void)setStatusBarStyle:(int)style
@@ -120,6 +124,29 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 %end
 
+void setDefaultColors()
+{
+	/* Common modifications */
+	[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
+	[UINavigationBar appearance].tintColor = OrangeColor;
+
+	[UITableView appearance].backgroundColor = TableViewBackgroundColor;
+	[UITableViewCell appearance].tintColor = BlueColor;
+			
+	[UISwitch appearance].tintColor = ColorWithWhite(0.50);
+	[UISwitch appearance].onTintColor = GreenColor;
+	[UISwitch appearance].thumbTintColor = ColorWithRGB(214,219,223);
+
+	[UISearchBar appearance].translucent = YES;
+	[UISearchBar appearance].barTintColor = CellBackgroundColor;
+
+	[UISegmentedControl appearance].tintColor = BlueColor;
+
+	[UIActivityIndicatorView appearance].color = ColorWithWhite(0.70);
+
+	[UITextField appearance].keyboardAppearance = UIKeyboardAppearanceDark;
+}
+
 %ctor
 {
 	NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
@@ -129,44 +156,24 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 			// TODO
 		}else{
 
-			%init(Applications); 
-
 			if([bundleID isEqualToString:@"com.apple.Preferences"]){
-
+				%init(Applications);
+				customizeCellPtr = &notcurnePreferencesUITableViewCellModifications;
+				customizeHeaderPtr = &nocturnePreferencesUITableViewHeaderModification;
 				customizeFooterPtr = &nocturnePreferencesUITableViewFooterModification;
+
+				if(!customizeCellPtr){
+					customizeCellPtr = &notcurneCommonUITableViewCellModifications;
+				}
+				if(!customizeHeaderPtr){
+					customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
+				}
+				if(!customizeFooterPtr){
+					customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
+				}
+				setDefaultColors();
+				delegateList = [[[NSMutableArray alloc] init] autorelease];
 			}
-
-			if(!customizeCellPtr){
-				customizeCellPtr = &notcurneCommonUITableViewCellModifications;
-			}
-			if(!customizeHeaderPtr){
-				customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
-			}
-			if(!customizeFooterPtr){
-				customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
-			}
-
-			delegateList = [[[NSMutableArray alloc] init] autorelease];
-
-			/* Common modifications */
-			[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
-			[UINavigationBar appearance].tintColor = OrangeColor;
-
-			[UITableView appearance].backgroundColor = TableViewBackgroundColor;
-			[UITableViewCell appearance].tintColor = BlueColor;
-					
-			[UISwitch appearance].tintColor = ColorWithWhite(0.50);
-			[UISwitch appearance].onTintColor = GreenColor;
-			[UISwitch appearance].thumbTintColor = ColorWithRGB(214,219,223);
-
-			[UISearchBar appearance].translucent = YES;
-			[UISearchBar appearance].barTintColor = ColorWithRGB(33,47,61);
-
-			[UISegmentedControl appearance].tintColor = BlueColor;
-
-			[UIActivityIndicatorView appearance].color = ColorWithWhite(0.70);
-
-			[UITextField appearance].keyboardAppearance = UIKeyboardAppearanceDark;
 		}
 	}	
 }

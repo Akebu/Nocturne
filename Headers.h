@@ -1,17 +1,19 @@
+#import <objc/runtime.h>
+
 // MAIN THEME
-#define CellBackgroundColor ColorWithRGB(33,47,61)
-#define TableViewBackgroundColor ColorWithRGB(28,40,51)
-#define CellTextColor ColorWithWhite(0.90)
+#define CellBackgroundColor ColorWithRGB(13, 27, 40)
+#define TableViewBackgroundColor ColorWithRGB(7,18,29)
+#define CellTextColor ColorWithWhite(0.80)
 #define CellDetailTextColor ColorWithWhite(0.75)
-#define CellSelectedColor ColorWithRGB(93,109,126)
+#define CellSelectedColor ColorWithRGB(83,99,116)
 
-#define TableViewHeaderTextColor ColorWithRGB(230, 126, 34)//ColorWithWhite(0.72);
-#define TableViewFooterTextColor ColorWithRGB(230, 126, 34)//ColorWithWhite(0.72);
+#define TableViewHeaderTextColor ColorWithWhite(0.65)
+#define TableViewFooterTextColor ColorWithWhite(0.65)
 
-#define OrangeColor ColorWithRGB(230, 126, 34)
+#define OrangeColor ColorWithRGB(211, 84, 0)
 #define GreenColor ColorWithRGB(29, 131, 72)
-#define BlueColor ColorWithRGB(41, 128, 185)
-#define NotificationSelectionColor ColorWithRGB(127,179,213)
+#define BlueColor ColorWithRGB(27, 79, 114)
+#define LightBlueColor ColorWithRGB(33, 97, 140)
 
 #define TextColor ColorWithWhite(0.90)
 #define LightTextColor ColorWithWhite(0.72)
@@ -28,13 +30,26 @@ static IMP original_UITableViewDelegate_FooterView_;
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 
+void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+
+@interface NocturneController : NSObject
++ (void)isInTweakPref:(BOOL)state;
+@end
 
 @interface UIImage (invertColors)
 - (UIImage *)invertColors;
 - (BOOL) isDark;
 @end
 
-@interface UISlider ()
-- (id)_minValueView;
+@interface PSListController : NSObject
+- (id)specifiers;
+- (NSBundle *)bundle;
+- (BOOL)shouldReplaceIcons;
+@end
+
+@interface PUAlbumListCellContentView : UIView
+- (id)_subtitleLabel;
+- (id)_titleTextField;
 @end

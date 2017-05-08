@@ -1,9 +1,11 @@
 Package: com.tonyciroussel.nocturne
 Name: Nocturne
-Depends: mobilesubstrate
-Version: 0.0.1
+Depends: firmware (>= 7.0), mobilesubstrate
+Version: 0.1b
 Architecture: iphoneos-arm
-Description: Make iPhone darker!
+Description: Don't burn your eyes
 Maintainer: Tony Ciroussel
 Author: Tony Ciroussel
 Section: Tweaks
+Homepage: https://akebu.github.io/cydia/depictions/?p=com.tonyciroussel.nocturne
+Depiction: https://akebu.github.io/cydia/depictions/?p=com.tonyciroussel.nocturne
