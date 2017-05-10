@@ -9,15 +9,20 @@ void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *
 	cell.backgroundColor = CellBackgroundColor; 
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
-
-
 }
 
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
-	if ([view respondsToSelector:@selector(textLabel)]){
+	if([view respondsToSelector:@selector(textLabel)]){
 		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewHeaderTextColor;
 		[((UITableViewHeaderFooterView *) view) backgroundView].backgroundColor = TableViewBackgroundColor;
+	}
+	else
+	{
+		for(id label in [view subviews]){
+			if([label respondsToSelector:@selector(setTextColor:)])
+				((UILabel *)label).textColor = TableViewFooterTextColor;
+		}
 	}
 }
 
@@ -28,13 +33,17 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
 	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
+
 	if(isInTweakPref){
 		UIImage *icon = cell.imageView.image;
 		if([icon isDark]){
 			cell.imageView.image = [icon invertColors];
 		}
 	}
-	if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
+	if([cell class] == objc_getClass("PSTableCell")){
+		
+	}
+	else if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
 		PUAlbumListCellContentView *cellView = cell.contentView.subviews[0];
 		UILabel *label = [cellView _subtitleLabel];
 		label.backgroundColor = [UIColor clearColor];
@@ -49,12 +58,12 @@ void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableV
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
 	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
+
 	if(isInTweakPref){
 		if(view.frame.size.height > 55){
 			for(id label in [view subviews]){
-				if([label class] == [UILabel class]){
+				if([label class] == [UILabel class])
 					((UILabel *)label).textColor = TableViewHeaderTextColor;
-				}
 			}
 		}
 	}
@@ -64,12 +73,10 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 {
 	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
 
-	UITextView *possibleUITextView = [[view subviews] firstObject];
-	if([possibleUITextView class] == [UITextView class]){
-
-		NSAttributedString *oldFooterAttributedString = [possibleUITextView attributedText];
+	if([[[view subviews] firstObject] class] == [UITextView class]){
+		UITextView *attributedTextView = [[view subviews] firstObject];
+		NSAttributedString *oldFooterAttributedString = [attributedTextView attributedText];
 		NSMutableAttributedString *footerAttributedString = [[NSMutableAttributedString alloc] initWithString:[oldFooterAttributedString string]];
-
 		[oldFooterAttributedString enumerateAttributesInRange:NSMakeRange(0, [oldFooterAttributedString length])
 			options:nil
 			usingBlock:^(NSDictionary<NSString *,id> *attrs, NSRange range, BOOL *stop)
@@ -83,19 +90,9 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 				}
 			}
 		];
-
-		possibleUITextView.attributedText = footerAttributedString;
-		possibleUITextView.tintColor = BlueColor;
+		attributedTextView.attributedText = footerAttributedString;
+		attributedTextView.tintColor = BlueColor;
 		[footerAttributedString release];
-	}
-	else
-	{
-		for(id label in [view subviews]){
-			if([label respondsToSelector:@selector(setTextColor:)])
-			{
-				((UILabel *)label).textColor = TableViewFooterTextColor;
-			}
-		}
 	}
 }
 

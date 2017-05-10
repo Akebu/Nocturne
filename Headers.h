@@ -7,8 +7,8 @@
 #define CellDetailTextColor ColorWithWhite(0.75)
 #define CellSelectedColor ColorWithRGB(83,99,116)
 
-#define TableViewHeaderTextColor ColorWithWhite(0.65)
-#define TableViewFooterTextColor ColorWithWhite(0.65)
+#define TableViewHeaderTextColor OrangeColor//ColorWithWhite(0.65)
+#define TableViewFooterTextColor OrangeColor//ColorWithWhite(0.65)
 
 #define OrangeColor ColorWithRGB(211, 84, 0)
 #define GreenColor ColorWithRGB(29, 131, 72)
