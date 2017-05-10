@@ -1,1 +1,1 @@
-{ Filter = { Bundles = ( "com.apple.wallpaper.settings" ); }; }
+{ Filter = { Bundles = ( "com.apple.PhotosUI" ); }; }
