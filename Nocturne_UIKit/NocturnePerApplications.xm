@@ -9,6 +9,7 @@ void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *
 	cell.backgroundColor = CellBackgroundColor; 
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
+	cell.imageView.tintColor = ColorWithWhite(0.90);
 }
 
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
@@ -33,17 +34,14 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
 	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
-
 	if(isInTweakPref){
 		UIImage *icon = cell.imageView.image;
 		if([icon isDark]){
-			cell.imageView.image = [icon invertColors];
+			cell.imageView.image = [icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+			cell.imageView.tintColor = ColorWithWhite(0.80);
 		}
 	}
-	if([cell class] == objc_getClass("PSTableCell")){
-		
-	}
-	else if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
+	if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
 		PUAlbumListCellContentView *cellView = cell.contentView.subviews[0];
 		UILabel *label = [cellView _subtitleLabel];
 		label.backgroundColor = [UIColor clearColor];
@@ -51,7 +49,7 @@ void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableV
 
 		UITextField *textField = [cellView _titleTextField];
 		textField.backgroundColor = [UIColor clearColor];
-		textField.textColor = TextColor;
+		textField.textColor = CellTextColor;
 	}
 }
 
@@ -67,6 +65,7 @@ void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITable
 			}
 		}
 	}
+	HBLogInfo(@"%@", [view subviews])
 }
 
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)

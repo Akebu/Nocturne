@@ -3,6 +3,7 @@
 // MAIN THEME
 #define CellBackgroundColor ColorWithRGB(13, 27, 40)
 #define TableViewBackgroundColor ColorWithRGB(7,18,29)
+#define TextFieldBackgroundView ColorWithWhite(1)
 #define CellTextColor ColorWithWhite(0.80)
 #define CellDetailTextColor ColorWithWhite(0.75)
 #define CellSelectedColor ColorWithRGB(83,99,116)

@@ -108,10 +108,6 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 %end
 
-%hook UIStackView
-
-%end
-
 %hook UIApplication
 
 -(void)setStatusBarStyle:(int)style
