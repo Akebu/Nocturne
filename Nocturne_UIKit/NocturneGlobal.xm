@@ -76,6 +76,24 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 %end
 
+%hook UISlider
+- (void)setMinimumTrackImage:(UIImage *)image forState:(UIControlState)state
+{
+	image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+	%orig;
+}
+- (void)setMaximumTrackImage:(UIImage *)image forState:(UIControlState)state
+{
+	//image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+	%log;
+	%orig([image invertColors], state);
+}
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+}
+%end
+
 %hook UITextField
 
 - (void)setTextColor:(UIColor *)color

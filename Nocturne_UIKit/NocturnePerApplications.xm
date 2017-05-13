@@ -51,6 +51,12 @@ void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableV
 		textField.backgroundColor = [UIColor clearColor];
 		textField.textColor = CellTextColor;
 	}
+	if((([cell class] == objc_getClass("PLBatteryUIDisplayTableCell"))) || ([cell class] == objc_getClass("ACUIAccountSummaryCell"))){
+		for(id label in [cell subviews]){
+			if([label respondsToSelector:@selector(setTextColor:)])
+				((UILabel *)label).textColor = VeryLightTextColor;
+		}
+	}
 }
 
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
@@ -65,7 +71,6 @@ void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITable
 			}
 		}
 	}
-	HBLogInfo(@"%@", [view subviews])
 }
 
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)

@@ -13,7 +13,6 @@
 - (void)setProperty:(id)prop forKey:(id)key;
 @end
 
-
 %hook PSListController
 - (void)viewWillAppear:(bool)arg1
 {
@@ -26,7 +25,6 @@
 		[%c(NocturneController) isInTweakPref:NO];
 	}
 }
-
 %end
 
 %group WallpaperMagicTableCategoryLabel
