@@ -4,7 +4,7 @@
 
 @implementation UIImage (extention)
 
-- (UIImage *)invertColors;
+- (UIImage *)inverseColors;
 {
 	/* http://stackoverflow.com/a/22669888 */
 	CIImage *coreImage = [CIImage imageWithCGImage:self.CGImage];

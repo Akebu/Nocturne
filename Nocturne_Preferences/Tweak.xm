@@ -1,5 +1,9 @@
 #import "../Headers.h"
 
+@interface FailureBarView : UIImageView
+- (void)setFailureCount:(long long)arg1;
+@end
+
 @interface NotificationsExplanationView : NSObject
 -(NSArray *)_accessibilityLabels;
 @end
@@ -13,6 +17,51 @@
 - (void)setProperty:(id)prop forKey:(id)key;
 @end
 
+@interface PSPasscodeField : UIView
+- (void)setForegroundColor:(UIColor *)color;
+@end
+
+%hook PSPasscodeField
+- (void)setForegroundColor:(UIColor *)color
+{
+	%orig(VeryLightTextColor);
+}
+- (id)initWithNumberOfEntryFields:(unsigned long long)arg1
+{
+	PSPasscodeField *passcodeField = %orig;
+	[passcodeField setForegroundColor:VeryLightTextColor];
+	return passcodeField;
+
+}
+%end
+
+%hook PINView
+- (void)setBackgroundColor:(UIColor *)color
+{
+	%orig(TableViewBackgroundColor);
+}
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	UILabel *title = MSHookIvar<UILabel *>(self, "_titleLabel");
+	title.textColor = TextColor;
+
+	UILabel *pinLabel = MSHookIvar<UILabel *>(self, "_pinPolicyLabel");
+	pinLabel.textColor = LightTextColor;
+}
+%end
+
+%hook FailureBarView
+- (id)initWithFrame:(CGRect)frame
+{
+	FailureBarView *barView = %orig;
+	[barView setImage:nil];
+	[barView setBackgroundColor:RedColor];
+	barView.layer.cornerRadius = 7;
+	return barView;
+}
+%end
+
 %hook PSListController
 - (void)viewWillAppear:(bool)arg1
 {
@@ -20,9 +69,9 @@
 	NSString *bundlePath = [[self bundle] bundlePath];
 
 	if([bundlePath rangeOfString:@"/System/Library/"].location == NSNotFound){
-		[%c(NocturneController) isInTweakPref:YES];
+		[[%c(NocturneController) sharedInstance] setTweakPref:YES];
 	}else{
-		[%c(NocturneController) isInTweakPref:NO];
+		[[%c(NocturneController) sharedInstance] setTweakPref:NO];
 	}
 }
 %end
@@ -103,7 +152,7 @@
 
 	-(void)setIcon:(UIImage *)image
 	{
-		%orig([image invertColors]);
+		%orig([image inverseColors]);
 	}
 
 	-(id)_preferenceLabelWithText:(id)arg1
@@ -217,7 +266,12 @@
 		}
 
 		void *photoUIHandle = dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_PhotosUI.dylib", RTLD_LAZY);
-		if(!photoUIHandle)
+		if(!photoUIHandle){
 			HBLogError(@"Nocturne : Failed to dlopen Nocturne_PhotosUI.dylib for iOS %f", [systemVersionString floatValue]);
+		}
+		else
+		{
+			dlclose(photoUIHandle);
+		}
 	});
 }

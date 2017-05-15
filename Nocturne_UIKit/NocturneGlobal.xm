@@ -6,37 +6,81 @@ void (*customizeCellPtr)(id, SEL, UITableView *, UITableViewCell *,NSIndexPath *
 void (*customizeHeaderPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
-%group Applications 
+%group Global
 
+%hook UIKBRenderConfig
+
+- (BOOL)lightKeyboard
+{
+	/* Dark keyboard only ! */
+	return NO;
+}
+
+%end
+
+%hook _UIBackdropView
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	UIColor *blurColor = [UIColor colorWithRed:1/255.0f green:11/255.0f blue:22/255.0f alpha:0.9f];
+	[self transitionToColor:blurColor];
+}
+%end
+
+%end
+
+%group Applications
 /* === Hooks === */
 %hook UITableView
 - (void)setDelegate:(id)delegate
 {
-	if(delegate != nil && ![delegateList containsObject:NSStringFromClass([delegate class])]){
-		if(![delegate respondsToSelector:@selector(tableView:willDisplayCell:forRowAtIndexPath:)]){
-			class_addMethod([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, "@@:@@");
-		}
-		else
-		{
+	/* Check the current delegate, call MSHookMessageEx twice will crash the program */
+	if(![delegateList containsObject:[delegate class]] && delegate != nil){
+
+		IMP *original_UITableViewDelegate_willDisplayCell_;
+		IMP *original_UITableViewDelegate_HeaderView_;
+		IMP *original_UITableViewDelegate_FooterView_;
+
+		NSMutableArray *pointerList = [[NSMutableArray alloc] init];
+
+		/* Add delegate class always in first position */
+		[pointerList addObject:[delegate class]];
+
+		/* Try to add tableView:willDisplayCell:forRowAtIndexPath:*/
+		BOOL addWillDisplayCellMethod = class_addMethod([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, "@@:@@");
+		if(!addWillDisplayCellMethod){
+			/* tableView:willDisplayCell:forRowAtIndexPath: already exist, so it can be Hooked */
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, (IMP *)&original_UITableViewDelegate_willDisplayCell_);
+			/* Store the value of the original call, so it can be called later */
+			[pointerList addObject:[NSValue valueWithPointer:original_UITableViewDelegate_willDisplayCell_]];
+		}else{
+			/* tableView:willDisplayCell:forRowAtIndexPath: does not exist, the method have been created and call the correct function. */
+			[pointerList addObject:[NSNull null]];
 		}
 
-		if(![delegate respondsToSelector:@selector(tableView:willDisplayHeaderView:forSection:)]){
-			class_addMethod([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, "@@:@@");
-		}
-		else
-		{ 
+		/* Try to add tableView:willDisplayHeaderView:forSection:*/
+		BOOL addwillDisplayHeaderViewMethod = class_addMethod([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, "@@:@@");
+		if(!addwillDisplayHeaderViewMethod){
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, (IMP *)&original_UITableViewDelegate_HeaderView_);
+			[pointerList addObject:[NSValue valueWithPointer:original_UITableViewDelegate_HeaderView_]];
+		}else{
+			[pointerList addObject:[NSNull null]];
 		}
 
-		if(![delegate respondsToSelector:@selector(tableView:willDisplayFooterView:forSection:)]){
-			class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, "@@:@@");
-		}
-		else
-		{
+		/* Try to add tableView:willDisplayFooterView:forSection:*/
+		BOOL addWillDisplayFooterViewMethod = class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, "@@:@@");
+		if(!addWillDisplayFooterViewMethod){
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, (IMP *)&original_UITableViewDelegate_FooterView_);
+			[pointerList addObject:[NSValue valueWithPointer:original_UITableViewDelegate_FooterView_]];
+		}else{
+			[pointerList addObject:[NSNull null]];
 		}
-		[delegateList addObject:NSStringFromClass([delegate class])];
+
+		/* Add the pointer array to the NocturneController */
+		[[NocturneController sharedInstance] addOriginalCalls:pointerList];
+		[pointerList release];
+		/* Add the current delegate, call MSHookMessageEx twice will crash the program */
+		[delegateList addObject:[delegate class]];
 	}
 
 	%orig;
@@ -76,24 +120,6 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 %end
 
-%hook UISlider
-- (void)setMinimumTrackImage:(UIImage *)image forState:(UIControlState)state
-{
-	image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-	%orig;
-}
-- (void)setMaximumTrackImage:(UIImage *)image forState:(UIControlState)state
-{
-	//image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-	%log;
-	%orig([image invertColors], state);
-}
-- (void)willMoveToSuperview:(UIView *)newSuperview
-{
-	%orig;
-}
-%end
-
 %hook UITextField
 
 - (void)setTextColor:(UIColor *)color
@@ -106,6 +132,7 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 
 - (UIImage *)_clearButtonImageForState:(unsigned int)arg1
 {
+	/* Allow button image to be tinted */
 	UIImage *clearButtonImage = %orig;
 	clearButtonImage = [clearButtonImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 	return clearButtonImage;
@@ -134,13 +161,36 @@ void (*customizeFooterPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 }
 %end
 
+%hook UINavigationBar
+- (void)setBarStyle:(int)style
+{
+	%orig(UIBarStyleBlackTranslucent);
+}
+- (void)setTintColor:(UIColor *)color
+{
+	%orig(OrangeColor);
+}
+- (void)setTitleTextAttributes:(NSDictionary *)attributes
+{
+	NSDictionary *newAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName, nil];
+	%orig(newAttributes);
+}
+%end
+
+%hook UITabBar
+- (void)setBarTintColor:(UIColor *)color
+{
+	 %orig([UIColor orangeColor]);
+}
+%end
+
 /* === === === */
 
 %end
 
 void setDefaultColors()
 {
-	/* Common modifications */
+	/* Use appearance, I don't want to block other tweak for theses objects*/
 	[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
 	[UINavigationBar appearance].tintColor = OrangeColor;
 
@@ -157,37 +207,26 @@ void setDefaultColors()
 	[UISegmentedControl appearance].tintColor = BlueColor;
 
 	[UIActivityIndicatorView appearance].color = ColorWithWhite(0.70);
-
-	[UITextField appearance].keyboardAppearance = UIKeyboardAppearanceDark;
 }
 
 %ctor
 {
 	NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
 	if([bundleID hasPrefix:@"com.apple."]){
-
+		%init(Global);
 		if([bundleID isEqualToString:@"com.apple.springboard"]){
-			// TODO
 		}else{
-
+			%init(Applications);
 			if([bundleID isEqualToString:@"com.apple.Preferences"]){
-				%init(Applications);
 				customizeCellPtr = &notcurnePreferencesUITableViewCellModifications;
 				customizeHeaderPtr = &nocturnePreferencesUITableViewHeaderModification;
 				customizeFooterPtr = &nocturnePreferencesUITableViewFooterModification;
-
-				if(!customizeCellPtr){
-					customizeCellPtr = &notcurneCommonUITableViewCellModifications;
-				}
-				if(!customizeHeaderPtr){
-					customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
-				}
-				if(!customizeFooterPtr){
-					customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
-				}
-				setDefaultColors();
-				delegateList = [[[NSMutableArray alloc] init] autorelease];
 			}
+			if([bundleID isEqualToString:@"com.apple.Music"]){
+				customizeCellPtr = &notcurneMusicUITableViewCellModifications;
+			}
+			setDefaultColors();
+			delegateList = [[[NSMutableArray alloc] init] autorelease];
 		}
 	}	
 }

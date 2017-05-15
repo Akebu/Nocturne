@@ -1,11 +1,17 @@
 #import "../Headers.h"
 
-static BOOL isInTweakPref;
-
 /* === Common modifications === */
 
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
+	NSMutableArray *callList = [[NocturneController sharedInstance] getPointerList];
+	for(NSArray *callArray in callList){
+		if(([callArray objectAtIndex:0] == [tableView.delegate class]) && ([callArray objectAtIndex:1] != [NSNull null])){
+			/* The delegate is the same, we can call the original implementation */
+			IMP original_UITableViewDelegate_willDisplayCell_ = (IMP)[[callArray objectAtIndex:1] pointerValue];
+			((void(*)(id, SEL, UITableView *, UITableViewCell *, NSIndexPath *))original_UITableViewDelegate_willDisplayCell_)(self, _cmd, tableView, cell, indexPath);
+		}
+	}
 	cell.backgroundColor = CellBackgroundColor; 
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
@@ -34,7 +40,8 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
 	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
-	if(isInTweakPref){
+
+	if([[NocturneController sharedInstance] isInTweakPref]){
 		UIImage *icon = cell.imageView.image;
 		if([icon isDark]){
 			cell.imageView.image = [icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -63,7 +70,7 @@ void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITable
 {
 	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
 
-	if(isInTweakPref){
+	if([[NocturneController sharedInstance] isInTweakPref]){
 		if(view.frame.size.height > 55){
 			for(id label in [view subviews]){
 				if([label class] == [UILabel class])
@@ -102,13 +109,11 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 
 /* === === === */
 
-/* === Communication === */
-@implementation NocturneController
+/* === Preferences.app === */
 
-+ (void)isInTweakPref:(BOOL)state
+void notcurneMusicUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	isInTweakPref = state;
+	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
 }
 
-@end
 /* === === === */

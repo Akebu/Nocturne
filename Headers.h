@@ -8,9 +8,10 @@
 #define CellDetailTextColor ColorWithWhite(0.75)
 #define CellSelectedColor ColorWithRGB(83,99,116)
 
-#define TableViewHeaderTextColor OrangeColor//ColorWithWhite(0.65)
-#define TableViewFooterTextColor OrangeColor//ColorWithWhite(0.65)
+#define TableViewHeaderTextColor ColorWithWhite(0.65)
+#define TableViewFooterTextColor ColorWithWhite(0.65)
 
+#define RedColor ColorWithRGB(169, 50, 38)
 #define OrangeColor ColorWithRGB(211, 84, 0)
 #define GreenColor ColorWithRGB(29, 131, 72)
 #define BlueColor ColorWithRGB(27, 79, 114)
@@ -21,12 +22,14 @@
 #define VeryLightTextColor ColorWithWhite(0.70)
 // ---
 
+// CALLS
+#define kCellDelegateCall [NSNumber numberWithInt:1]
+#define kHeaderDelegateCall [NSNumber numberWithInt:2]
+#define kFooterDelegateCall [NSNumber numberWithInt:3]
+// ---
+
 #define ColorWithRGB(r,g,b) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:1]
 #define ColorWithWhite(w) [UIColor colorWithWhite:w alpha:1]
-
-static IMP original_UITableViewDelegate_willDisplayCell_;
-static IMP original_UITableViewDelegate_HeaderView_;
-static IMP original_UITableViewDelegate_FooterView_;
 
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
@@ -35,12 +38,31 @@ void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITable
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 
+void notcurneMusicUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+void nocturneMusicUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void nocturneMusicUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+
 @interface NocturneController : NSObject
-+ (void)isInTweakPref:(BOOL)state;
+@property (nonatomic, assign, getter=isInTweakPref) BOOL tweakPref;
++ (id)sharedInstance;
+- (void)addOriginalCalls:(NSMutableArray *)array;
+- (NSMutableArray *)getPointerList;
+- (id)init;
+-(void)dealloc;
+- (BOOL)pointerExistForItem:(id)item;
 @end
 
-@interface UIImage (invertColors)
-- (UIImage *)invertColors;
+@interface _UIBackdropView : UIView
+-(NSArray *)allBackdropViews;
+- (void)transitionToColor:(id)arg1;
+- (id)darkeningTintView;
+@end
+
+@interface DevicePINKeypad : UIView
+@end
+
+@interface UIImage (inverseColors)
+- (UIImage *)inverseColors;
 - (BOOL) isDark;
 @end
 
