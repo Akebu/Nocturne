@@ -2,7 +2,7 @@
 
 @implementation NocturneController
 {
-	NSMutableArray *pointerList;
+	NSMutableDictionary *storedCalls;
 }
 
 + (id)sharedInstance
@@ -15,44 +15,37 @@
     return sharedInstance;
 }
 
-- (NSMutableArray *)getPointerList
+- (BOOL)classExists:(id)delegateClass
 {
-	return pointerList;
-}
-
-- (BOOL)pointerExistForItem:(id)item
-{
-	BOOL hasPointer = NO;
-	HBLogInfo(@"POINTER : %p", item);
-	for(int i = 0; i < [pointerList count]; i++){
-		if([pointerList[i] objectAtIndex:0] == item){
-			hasPointer = YES;
-			break;
-		}
-	}
-	return hasPointer;
-}
-
-- (void)addOriginalCalls:(NSMutableArray *)array
-{
-	if([pointerList count] == 0)
-		[pointerList addObject:array];
+	if([storedCalls objectForKey:delegateClass])
+		return TRUE;
 	else
-	{
-		if(![self pointerExistForItem:[array objectAtIndex:0]])
-			[pointerList addObject:array];
+		return FALSE;
+}
+
+- (void *)getPointerAtIndex:(int)index forDelegate:(id)delegateClass
+{
+	NSPointerArray *pointerList = [storedCalls objectForKey:delegateClass];
+	if(pointerList){
+		return [pointerList pointerAtIndex:index];
 	}
+	return nil;
+}
+
+- (void)addPointerList:(NSPointerArray *)pointerList forDelegate:(id)delegateClass
+{
+	[storedCalls setObject:pointerList forKey:delegateClass];
 }
 
 - (id)init
 {
-	pointerList = [[NSMutableArray alloc] init];
+	storedCalls = [[NSMutableDictionary alloc] init];
 	return [super init];
 }
 
 -(void)dealloc
 {
-	[pointerList release];
+	[storedCalls release];
 	[super dealloc];
 }
 

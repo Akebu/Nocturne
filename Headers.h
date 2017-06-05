@@ -31,25 +31,26 @@
 #define ColorWithRGB(r,g,b) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:1]
 #define ColorWithWhite(w) [UIColor colorWithWhite:w alpha:1]
 
+
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void nocturneCommonUITableViewDidDeselectRow(id self, SEL _cmd, UITableView *tableView, NSIndexPath *indexPath);
 
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 
-void notcurneMusicUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
-void nocturneMusicUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
-void nocturneMusicUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+
 
 @interface NocturneController : NSObject
 @property (nonatomic, assign, getter=isInTweakPref) BOOL tweakPref;
 + (id)sharedInstance;
-- (void)addOriginalCalls:(NSMutableArray *)array;
-- (NSMutableArray *)getPointerList;
+- (void)addPointerList:(NSPointerArray *)pointerArray forDelegate:(id)delegateClass;
+- (BOOL)classExists:(id)delegateClass;
+- (void *)getPointerAtIndex:(int)index forDelegate:(id)delegateClass;
 - (id)init;
 -(void)dealloc;
-- (BOOL)pointerExistForItem:(id)item;
 @end
 
 @interface _UIBackdropView : UIView
@@ -75,4 +76,10 @@ void nocturneMusicUITableViewFooterModification(id self, SEL _cmd, UITableView *
 @interface PUAlbumListCellContentView : UIView
 - (id)_subtitleLabel;
 - (id)_titleTextField;
+@end
+
+@interface PHRecentsCell : UITableViewCell
+{
+	UILabel *_callerNameLabel;
+}
 @end

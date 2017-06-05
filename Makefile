@@ -9,4 +9,4 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 include $(THEOS_MAKE_PATH)/tweak.mk
 
 after-install::
-	@install.exec "killall -9 Music"
+	@install.exec "killall -9 Phone"

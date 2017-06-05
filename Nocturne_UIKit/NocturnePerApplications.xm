@@ -1,21 +1,26 @@
 #import "../Headers.h"
+#import "substrate.h"
 
 /* === Common modifications === */
 
+void notcurneUITableViewOriginalCall(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath, int index)
+{
+	IMP original_UITableViewDelegate_willDisplayCell_ = (IMP)[[NocturneController sharedInstance] getPointerAtIndex:index forDelegate:[tableView.delegate class]];
+	if(original_UITableViewDelegate_willDisplayCell_)
+		((void(*)(id, SEL, UITableView *, UITableViewCell *, NSIndexPath *))original_UITableViewDelegate_willDisplayCell_)(self, _cmd, tableView, cell, indexPath);
+}
+
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	NSMutableArray *callList = [[NocturneController sharedInstance] getPointerList];
-	for(NSArray *callArray in callList){
-		if(([callArray objectAtIndex:0] == [tableView.delegate class]) && ([callArray objectAtIndex:1] != [NSNull null])){
-			/* The delegate is the same, we can call the original implementation */
-			IMP original_UITableViewDelegate_willDisplayCell_ = (IMP)[[callArray objectAtIndex:1] pointerValue];
-			((void(*)(id, SEL, UITableView *, UITableViewCell *, NSIndexPath *))original_UITableViewDelegate_willDisplayCell_)(self, _cmd, tableView, cell, indexPath);
-		}
-	}
 	cell.backgroundColor = CellBackgroundColor; 
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
 	cell.imageView.tintColor = ColorWithWhite(0.90);
+}
+
+void nocturneCommonUITableViewDidDeselectRow(id self, SEL _cmd, UITableView *tableView, NSIndexPath *indexPath)
+{
+	HBLogInfo(@"Yaha");
 }
 
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
@@ -109,11 +114,50 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 
 /* === === === */
 
-/* === Preferences.app === */
+/* === Phone.app === */
 
-void notcurneMusicUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
+void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
-}
+	notcurneUITableViewOriginalCall(self, _cmd, tableView, cell, indexPath, 0);
 
-/* === === === */
+	if([cell class] == objc_getClass("PHRecentsCell")){
+		cell.backgroundColor = CellBackgroundColor; 
+		UILabel *callerName = MSHookIvar<UILabel *>(cell, "_callerNameLabel");
+		CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
+		[callerName.textColor getRed:&red green:&green blue:&blue alpha:&alpha];
+		UIColor *color = nil;
+
+		if(red == 1 && green < 0.5 && blue < 0.5)
+			color = RedColor;
+		else
+			color = TextColor;
+
+		callerName.textColor = color;
+		callerName.backgroundColor = [UIColor clearColor];
+
+		UILabel *callerCountLabel = MSHookIvar<UILabel *>(cell, "_callerCountLabel");
+		callerCountLabel.textColor = color;
+		callerCountLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *callerNameLabel = MSHookIvar<UILabel *>(cell, "_callerLabelLabel");
+		callerNameLabel.textColor = LightTextColor;
+		callerNameLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *callerDateLabel = MSHookIvar<UILabel *>(cell, "_callerDateLabel");
+		callerDateLabel.textColor = VeryLightTextColor;
+		callerDateLabel.backgroundColor = [UIColor clearColor];
+
+		UIImageView *callType = MSHookIvar<UIImageView *>(cell, "_callTypeIconView");
+		callType.image = [callType.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+		callType.tintColor = ColorWithWhite(1);
+	}
+	else if([cell class] == objc_getClass("PHFavoritesCell"))
+	{
+		cell.backgroundColor = TableViewBackgroundColor;
+		UILabel *titleTextLabel = MSHookIvar<UILabel *>(cell, "_titleTextLabel");
+		titleTextLabel.textColor = TextColor;
+
+		UILabel *detailTextLabel = MSHookIvar<UILabel *>(cell, "_labelTextLabel");
+		detailTextLabel.textColor = LightTextColor;
+	}
+}
