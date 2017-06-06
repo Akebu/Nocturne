@@ -43,10 +43,4 @@
 	return [super init];
 }
 
--(void)dealloc
-{
-	[storedCalls release];
-	[super dealloc];
-}
-
 @end

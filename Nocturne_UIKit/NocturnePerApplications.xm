@@ -18,10 +18,6 @@ void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *
 	cell.imageView.tintColor = ColorWithWhite(0.90);
 }
 
-void nocturneCommonUITableViewDidDeselectRow(id self, SEL _cmd, UITableView *tableView, NSIndexPath *indexPath)
-{
-	HBLogInfo(@"Yaha");
-}
 
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
@@ -45,6 +41,7 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
 	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
+	notcurneUITableViewOriginalCall(self, _cmd, tableView, cell, indexPath, 0);
 
 	if([[NocturneController sharedInstance] isInTweakPref]){
 		UIImage *icon = cell.imageView.image;
@@ -154,10 +151,70 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 	else if([cell class] == objc_getClass("PHFavoritesCell"))
 	{
 		cell.backgroundColor = TableViewBackgroundColor;
-		UILabel *titleTextLabel = MSHookIvar<UILabel *>(cell, "_titleTextLabel");
-		titleTextLabel.textColor = TextColor;
+		MSHookIvar<UILabel *>(cell, "_titleTextLabel").textColor = TextColor;
+		MSHookIvar<UILabel *>(cell, "_labelTextLabel").textColor = LightTextColor;
+	}
+	else if([cell class] == objc_getClass("PHVoicemailCell"))
+	{
+		cell.backgroundColor = CellBackgroundColor;
+		cell.contentView.subviews[0].backgroundColor = CellBackgroundColor;
 
-		UILabel *detailTextLabel = MSHookIvar<UILabel *>(cell, "_labelTextLabel");
-		detailTextLabel.textColor = LightTextColor;
+		UILabel *nameLabel = MSHookIvar<UILabel *>(cell, "_nameLabel");
+		nameLabel.textColor = TextColor;
+		nameLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *labelLabel = MSHookIvar<UILabel *>(cell, "_labelLabel");
+		labelLabel.textColor = LightTextColor;
+		labelLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *durationLabel = MSHookIvar<UILabel *>(cell, "_durationLabel");
+		durationLabel.textColor = VeryLightTextColor;
+		durationLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *dateLabel = MSHookIvar<UILabel *>(cell, "_dateLabel");
+		dateLabel.textColor = LightTextColor;
+		dateLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *longDateLabel = MSHookIvar<UILabel *>(cell, "_longDateLabel");
+		longDateLabel.textColor = LightTextColor;
+		longDateLabel.backgroundColor = [UIColor clearColor];
+
+		UIImageView *unreadView = MSHookIvar<UIImageView *>(cell, "_unreadIndicatorView");
+		unreadView.image = [unreadView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+		unreadView.tintColor = OrangeColor;
+		unreadView.backgroundColor = [UIColor clearColor];
+
+		UIImageView *infoButton = MSHookIvar<UIImageView *>(cell, "_infoButton");
+		infoButton.backgroundColor = [UIColor clearColor];
+
+	}
+	else if([cell class] == objc_getClass("PHVoicemailFolderCell"))
+	{
+		cell.backgroundColor = CellBackgroundColor;
+
+		UILabel *folderLabel = MSHookIvar<UILabel *>(cell, "_folderLabel");
+		folderLabel.textColor = TextColor;
+		folderLabel.backgroundColor = [UIColor clearColor];
+
+		UILabel *countLabel = MSHookIvar<UILabel *>(cell, "_countLabel");
+		countLabel.textColor = LightTextColor;
+		countLabel.backgroundColor = [UIColor clearColor];
 	}
 }
+
+/*	@interface PHVoicemailCell : UITableViewCell
+{
+	UIImageView *_unreadIndicatorView;
+    UILabel *_nameLabel;
+    UILabel *_labelLabel;
+    UILabel *_durationLabel;
+    UIDateLabel *_dateLabel;
+    UILabel *_longDateLabel;
+    UIButton *_playPauseButton;
+    PHVoicemailSlider *_sliderView;
+    UIButton *_speakerButton;
+    UIButton *_callBackButton;
+    UIButton *_deleteButton;
+    UIButton *_infoButton;
+}
+@end*/

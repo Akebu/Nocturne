@@ -5,6 +5,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Nocturne_UIKit
 Nocturne_UIKit_FILES = NocturneController.m NocturneGlobal.xm UIImage+extention.m NocturnePerApplications.xm
+NocturneController.m_CFLAGS = -fobjc-arc
 Nocturne_UIKit_LDFLAGS += -Wl,-segalign,4000
 Nocturne_UIKit_FRAMEWORKS = UIKit CoreImage CoreGraphics
 

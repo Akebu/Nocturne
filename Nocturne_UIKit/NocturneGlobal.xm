@@ -3,7 +3,6 @@
 void (*customizeCellPtr)(id, SEL, UITableView *, UITableViewCell *,NSIndexPath *);
 void (*customizeHeaderPtr)(id, SEL, UITableView *,UIView *, NSInteger *);
 void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
-void (*customizeCellForDeselect)(id, SEL, UITableView *, NSIndexPath *);
 
 %group Global
 
@@ -29,6 +28,7 @@ void (*customizeCellForDeselect)(id, SEL, UITableView *, NSIndexPath *);
 %end
 
 %group Applications
+
 /* === Hooks === */
 %hook UITableView
 - (void)setDelegate:(id)delegate
@@ -38,7 +38,6 @@ void (*customizeCellForDeselect)(id, SEL, UITableView *, NSIndexPath *);
 		IMP *original_UITableViewDelegate_willDisplayCell_;
 		IMP *original_UITableViewDelegate_HeaderView_;
 		IMP *original_UITableViewDelegate_FooterView_;
-		IMP *original_UITableViewDelegate_didDeselect_;
 
 		NSPointerArray *pointerList = [[NSPointerArray alloc] initWithOptions:NSPointerFunctionsOpaqueMemory];
 
@@ -64,16 +63,6 @@ void (*customizeCellForDeselect)(id, SEL, UITableView *, NSIndexPath *);
 		}else{
 			class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, "@@:@@@");
 			[pointerList addPointer:nil];
-		}
-
-		if([delegate respondsToSelector:@selector(tableView:didDeselectRowAtIndexPath:)]){
-			MSHookMessageEx([delegate class], @selector(tableView:didDeselectRowAtIndexPath:), (IMP)customizeCellForDeselect, (IMP *)&original_UITableViewDelegate_didDeselect_);
-			[pointerList addPointer:original_UITableViewDelegate_didDeselect_];
-			HBLogInfo(@"Hooked !");
-		}else{
-			class_addMethod([delegate class], @selector(tableView:didDeselectRowAtIndexPath:), (IMP)customizeCellForDeselect, "@@:@@");
-			[pointerList addPointer:nil];
-			HBLogInfo(@"Added!");
 		}
 
 
@@ -189,8 +178,31 @@ void (*customizeCellForDeselect)(id, SEL, UITableView *, NSIndexPath *);
 
 %end
 
+%hook UIViewController
+- (void)viewWillAppear:(BOOL)animated
+{
+	%orig;
+	[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+}
+%end
+
 /* === === === */
 
+%end
+
+%group PhoneApp
+%hook _UIContentUnavailableView
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	self.backgroundColor = TableViewBackgroundColor;
+}
+
+- (id)_flatTextColor
+{
+	return TextColor;
+}
+%end
 %end
 
 void setDefaultColors()
@@ -225,7 +237,6 @@ void setDefaultColors()
 		if([bundleID isEqualToString:@"com.apple.springboard"]){
 		}else{
 			%init(Applications);
-			customizeCellForDeselect = &nocturneCommonUITableViewDidDeselectRow;
 
 			if([bundleID isEqualToString:@"com.apple.Preferences"]){
 				customizeCellPtr = &notcurnePreferencesUITableViewCellModifications;
@@ -234,6 +245,7 @@ void setDefaultColors()
 			}
 			if([bundleID isEqualToString:@"com.apple.mobilephone"])
 			{
+				%init(PhoneApp);
 				customizeCellPtr = &notcurnePhoneUITableViewCellModifications;
 				customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
 				customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
