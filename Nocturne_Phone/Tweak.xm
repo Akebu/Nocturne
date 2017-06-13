@@ -1,5 +1,11 @@
 #import "../Headers.h"
 
+@interface PHVoicemailSlider : UISlider
+@end
+
+@interface TPNumberPadButton : UIButton
+@end
+
 @interface TPDialerNumberPad : UIView
 @end
 
@@ -16,7 +22,7 @@
     UIBezierPath *_path;
     UIColor *_fillColor;
 }
-@property(retain, nonatomic) UIColor *fillColor; // @synthesize fillColor=_fillColor;
+@property(retain, nonatomic) UIColor *fillColor;
 @end
 
 @interface TPRevealingRingView : UIView
@@ -38,6 +44,34 @@
 
 %end
 
+%hook TPNumberPadButton
++ (id)imageForCharacter:(unsigned int)character highlighted:(bool)isHighlighted whiteVersion:(bool)isWhiteVersion
+{
+	UIImage *buttonImage = %orig;
+
+	if(isWhiteVersion)
+		return [buttonImage setTintColor:VeryLightTextColor];
+	else
+		return [buttonImage setTintColor:VeryLightTextColor];
+}
+
+- (id)initForCharacter:(unsigned int)arg1
+{
+	TPNumberPadButton *padButton = %orig;
+	padButton.backgroundColor = PhoneButtonColor;
+	return padButton;
+}
+
+%end
+
+%hook PHVoicemailSlider
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	self.backgroundColor = [UIColor clearColor];
+}
+%end
+
 %hook PHVoicemailCell
 + (id)grayColor
 {
@@ -47,23 +81,34 @@
 - (void)layoutSubviews
 {
 	%orig;
+	UIView *cellContentView = self.contentView;
+	HBLogInfo(@"%@", [cellContentView subviews]);
+	for(UIView *view in [cellContentView subviews])
+		view.backgroundColor = [UIColor clearColor];
+
 	UIButton *speakerButton = MSHookIvar<UIButton *>(self, "_speakerButton");
 	speakerButton.tintColor = BlueColor;
-	speakerButton.backgroundColor = [UIColor clearColor];
 
 	UIButton *callBackButton = MSHookIvar<UIButton *>(self, "_callBackButton");
 	callBackButton.tintColor = BlueColor;
-	callBackButton.backgroundColor = [UIColor clearColor];
 
 	UIButton *deleteButton = MSHookIvar<UIButton *>(self, "_deleteButton");
 	deleteButton.tintColor = RedColor;
-	deleteButton.backgroundColor = [UIColor clearColor];
 
-	/*UIButton *playPauseButton = MSHookIvar<UIButton *>(self, "_playPauseButton");
-	UIImage *buttonImage = [playPauseButton imageForState:UIControlStateNormal];
-	buttonImage = [buttonImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-	[playPauseButton setImage:buttonImage forState:UIControlStateNormal]; 
-	playPauseButton.tintColor = BlueColor;*/
+	UILabel *longDateLabel = MSHookIvar<UILabel *>(self, "_longDateLabel");
+	longDateLabel.backgroundColor = [UIColor clearColor];
+	longDateLabel.textColor = LightTextColor;
+}
+
++ (id)pauseImage
+{
+	UIImage *pauseImage = %orig;
+	return [pauseImage setTintColor:BlueColor];
+}
++ (id)playImage
+{
+	UIImage *pauseImage = %orig;
+	return [pauseImage setTintColor:BlueColor];
 }
 %end
 
@@ -78,8 +123,7 @@
 %hook TPPathView
 - (void)setFillColor:(UIColor *)color
 {
-	color = PhoneButtonColor;
-	%orig;
+	%orig(TableViewBackgroundColor);
 }
 %end
 

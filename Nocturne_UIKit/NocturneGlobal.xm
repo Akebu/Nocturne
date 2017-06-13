@@ -65,7 +65,6 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 			[pointerList addPointer:nil];
 		}
 
-
 		[[NocturneController sharedInstance] addPointerList:pointerList forDelegate:[delegate class]];
 		[pointerList release];
 	}
@@ -77,6 +76,7 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 {
 	%orig;
 	[self setIndicatorStyle:UIScrollViewIndicatorStyleWhite];
+	self.backgroundView = [[[UIView alloc] initWithFrame:self.frame] autorelease];
 }
 
 - (void)setBackgroundView:(UIView *)view
@@ -186,6 +186,21 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 }
 %end
 
+%hook UITableViewIndex
+- (void)setIndexBackgroundColor:(UIColor *)color
+{
+	%orig(CellBackgroundColor);
+}
+- (void)setIndexColor:(UIColor *)color
+{
+	%orig(LightTextColor);
+}
+- (void)setIndexTrackingBackgroundColor:(UIColor *)color
+{
+	%orig([UIColor blackColor]);
+}
+%end
+
 /* === === === */
 
 %end
@@ -246,9 +261,8 @@ void setDefaultColors()
 			if([bundleID isEqualToString:@"com.apple.mobilephone"])
 			{
 				%init(PhoneApp);
+				dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_ContactsUI.dylib", RTLD_NOW);
 				customizeCellPtr = &notcurnePhoneUITableViewCellModifications;
-				customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModification;
-				customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModification;
 			}
 			setDefaultColors();
 		}

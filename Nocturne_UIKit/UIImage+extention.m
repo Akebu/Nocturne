@@ -4,6 +4,17 @@
 
 @implementation UIImage (extention)
 
+- (UIImage *)setTintColor:(UIColor *)color
+{
+	UIImage *tintedImage = [self imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+	UIGraphicsBeginImageContextWithOptions(self.size, NO, self.scale);
+	[color set];
+	[tintedImage drawInRect:CGRectMake(0, 0, self.size.width, self.size.height)];
+	tintedImage = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+	return tintedImage;
+}
+
 - (UIImage *)inverseColors;
 {
 	/* http://stackoverflow.com/a/22669888 */

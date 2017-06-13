@@ -1,25 +1,44 @@
 #import "../Headers.h"
 #import "substrate.h"
 
-/* === Common modifications === */
+/* === %orig === */
 
-void notcurneUITableViewOriginalCall(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath, int index)
+void notcurneUITableViewCellOriginalCall(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	IMP original_UITableViewDelegate_willDisplayCell_ = (IMP)[[NocturneController sharedInstance] getPointerAtIndex:index forDelegate:[tableView.delegate class]];
+	IMP original_UITableViewDelegate_willDisplayCell_ = (IMP)[[NocturneController sharedInstance] getPointerAtIndex:0 forDelegate:[tableView.delegate class]];
 	if(original_UITableViewDelegate_willDisplayCell_)
 		((void(*)(id, SEL, UITableView *, UITableViewCell *, NSIndexPath *))original_UITableViewDelegate_willDisplayCell_)(self, _cmd, tableView, cell, indexPath);
 }
 
-void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
+void notcurneUITableViewHeaderOriginalCall(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
-	cell.backgroundColor = CellBackgroundColor; 
+	IMP original_UITableViewDelegate_HeaderView_ = (IMP)[[NocturneController sharedInstance] getPointerAtIndex:1 forDelegate:[tableView.delegate class]];
+	if(original_UITableViewDelegate_HeaderView_)
+		((void(*)(id, SEL, UITableView *, UIView *, NSInteger *))original_UITableViewDelegate_HeaderView_)(self, _cmd, tableView, view, index);
+}
+
+void notcurneUITableViewFooterOriginalCall(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
+{
+	IMP original_UITableViewDelegate_FooterView_ = (IMP)[[NocturneController sharedInstance] getPointerAtIndex:2 forDelegate:[tableView.delegate class]];
+	if(original_UITableViewDelegate_FooterView_)
+		((void(*)(id, SEL, UITableView *, UIView *, NSInteger *))original_UITableViewDelegate_FooterView_)(self, _cmd, tableView, view, index);
+}
+
+/* === === === */
+
+/* === Common modifications === */
+
+void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableViewCell *cell)
+{
+	cell.backgroundColor = CellBackgroundColor;
+	cell.contentView.backgroundColor = CellBackgroundColor;
 	cell.textLabel.textColor = CellTextColor;
 	cell.detailTextLabel.textColor = CellDetailTextColor;
 	cell.imageView.tintColor = ColorWithWhite(0.90);
 }
 
 
-void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
+void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UIView *view)
 {
 	if([view respondsToSelector:@selector(textLabel)]){
 		((UITableViewHeaderFooterView *) view).textLabel.textColor = TableViewHeaderTextColor;
@@ -40,8 +59,8 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITabl
 
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	notcurneCommonUITableViewCellModifications(self, _cmd, tableView, cell, indexPath);
-	notcurneUITableViewOriginalCall(self, _cmd, tableView, cell, indexPath, 0);
+	notcurneUITableViewCellOriginalCall(self, _cmd, tableView, cell, indexPath);
+	notcurneCommonUITableViewCellModifications(self, _cmd, cell);
 
 	if([[NocturneController sharedInstance] isInTweakPref]){
 		UIImage *icon = cell.imageView.image;
@@ -70,7 +89,8 @@ void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableV
 
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
-	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
+	notcurneUITableViewHeaderOriginalCall(self, _cmd, tableView, view, index);
+	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, view);
 
 	if([[NocturneController sharedInstance] isInTweakPref]){
 		if(view.frame.size.height > 55){
@@ -84,7 +104,8 @@ void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITable
 
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index)
 {
-	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, tableView, view, index);
+	notcurneUITableViewFooterOriginalCall(self, _cmd, tableView, view, index);
+	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, view);
 
 	if([[[view subviews] firstObject] class] == [UITextView class]){
 		UITextView *attributedTextView = [[view subviews] firstObject];
@@ -115,10 +136,12 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 
 void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
 {
-	notcurneUITableViewOriginalCall(self, _cmd, tableView, cell, indexPath, 0);
+	notcurneUITableViewCellOriginalCall(self, _cmd, tableView, cell, indexPath);
+
+	if([cell class] != objc_getClass("CNContactListTableViewCell"))
+		notcurneCommonUITableViewCellModifications(self, _cmd, cell);
 
 	if([cell class] == objc_getClass("PHRecentsCell")){
-		cell.backgroundColor = CellBackgroundColor; 
 		UILabel *callerName = MSHookIvar<UILabel *>(cell, "_callerNameLabel");
 		CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
 		[callerName.textColor getRed:&red green:&green blue:&blue alpha:&alpha];
@@ -156,12 +179,13 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 	}
 	else if([cell class] == objc_getClass("PHVoicemailCell"))
 	{
+
 		cell.backgroundColor = CellBackgroundColor;
 		cell.contentView.subviews[0].backgroundColor = CellBackgroundColor;
 
-		UILabel *nameLabel = MSHookIvar<UILabel *>(cell, "_nameLabel");
-		nameLabel.textColor = TextColor;
+		UILabel *nameLabel = ((PHVoicemailCell *)cell)._nameLabel;
 		nameLabel.backgroundColor = [UIColor clearColor];
+		nameLabel.textColor = CellTextColor;
 
 		UILabel *labelLabel = MSHookIvar<UILabel *>(cell, "_labelLabel");
 		labelLabel.textColor = LightTextColor;
@@ -174,10 +198,6 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 		UILabel *dateLabel = MSHookIvar<UILabel *>(cell, "_dateLabel");
 		dateLabel.textColor = LightTextColor;
 		dateLabel.backgroundColor = [UIColor clearColor];
-
-		UILabel *longDateLabel = MSHookIvar<UILabel *>(cell, "_longDateLabel");
-		longDateLabel.textColor = LightTextColor;
-		longDateLabel.backgroundColor = [UIColor clearColor];
 
 		UIImageView *unreadView = MSHookIvar<UIImageView *>(cell, "_unreadIndicatorView");
 		unreadView.image = [unreadView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -201,20 +221,3 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 		countLabel.backgroundColor = [UIColor clearColor];
 	}
 }
-
-/*	@interface PHVoicemailCell : UITableViewCell
-{
-	UIImageView *_unreadIndicatorView;
-    UILabel *_nameLabel;
-    UILabel *_labelLabel;
-    UILabel *_durationLabel;
-    UIDateLabel *_dateLabel;
-    UILabel *_longDateLabel;
-    UIButton *_playPauseButton;
-    PHVoicemailSlider *_sliderView;
-    UIButton *_speakerButton;
-    UIButton *_callBackButton;
-    UIButton *_deleteButton;
-    UIButton *_infoButton;
-}
-@end*/

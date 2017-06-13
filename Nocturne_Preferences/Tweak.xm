@@ -265,7 +265,7 @@
 			HBLogError(@"Nocturne : Failed to dlopen Wallpaper.bundle for iOS %f", [systemVersionString floatValue]);
 		}
 
-		void *photoUIHandle = dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_PhotosUI.dylib", RTLD_LAZY);
+		void *photoUIHandle = dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_PhotosUI.dylib", RTLD_NOW);
 		if(!photoUIHandle){
 			HBLogError(@"Nocturne : Failed to dlopen Nocturne_PhotosUI.dylib for iOS %f", [systemVersionString floatValue]);
 		}

@@ -26,16 +26,29 @@
 #define ColorWithRGB(r,g,b) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:1]
 #define ColorWithWhite(w) [UIColor colorWithWhite:w alpha:1]
 
+void notcurneUITableViewCellOriginalCall(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+void notcurneUITableViewHeaderOriginalCall(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void notcurneUITableViewFooterOriginalCall(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 
-void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
-void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableViewCell *cell);
+void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UIView *view);
 
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
 
 void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+void nocturnePhoneUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
+void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 
+@interface UITableViewController (nocturneExtension)
+- (void)nocturneCommonModificationForCell:(UITableViewCell *)cell;
+- (void)nocturneCommonModificationForHeaderFooterView:(UIView *)view;
+@end
+
+@interface UITableViewCell (background)
+- (void)_setupSelectedBackgroundView;
+@end
 
 @interface NocturneController : NSObject
 @property (nonatomic, assign, getter=isInTweakPref) BOOL tweakPref;
@@ -58,6 +71,7 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 @interface UIImage (inverseColors)
 - (UIImage *)inverseColors;
 - (BOOL) isDark;
+- (UIImage *)setTintColor:(UIColor *)color;
 @end
 
 @interface PSListController : NSObject
@@ -81,16 +95,11 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 @end
 
 @interface PHVoicemailCell : UITableViewCell
-{
-	UIImageView *_unreadIndicatorView;
-    UILabel *_nameLabel;
-    UILabel *_labelLabel;
-    UILabel *_durationLabel;
-    UILabel *_longDateLabel;
-    UIButton *_playPauseButton;
-    UIButton *_speakerButton;
-    UIButton *_callBackButton;
-    UIButton *_deleteButton;
-    UIButton *_infoButton;
-}
+-(id)_nameLabel;
+@end
+
+@interface UITableViewIndex : UIView
+@property (nonatomic, retain) UIColor *indexBackgroundColor;
+@property (nonatomic, retain) UIColor *indexColor;
+@property (nonatomic, retain) UIColor *indexTrackingBackgroundColor;
 @end
