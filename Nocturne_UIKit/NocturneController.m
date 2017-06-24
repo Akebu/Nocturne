@@ -5,6 +5,15 @@
 	NSMutableDictionary *storedCalls;
 }
 
++ (NSAttributedString *)_replaceColorForAttributedString:(NSAttributedString *)oldString withColor:(UIColor *)color
+{
+	NSDictionary *attributesFromString = [oldString attributesAtIndex:0 longestEffectiveRange:nil inRange:NSMakeRange(0, oldString.length)];
+	NSMutableDictionary *newAttributes = [attributesFromString mutableCopy];
+	[newAttributes setObject:color forKey:@"NSColor"];
+	NSAttributedString *newString = [[NSAttributedString alloc] initWithString:oldString.string attributes:newAttributes];
+	return newString;
+}
+
 + (id)sharedInstance
  {
     static NocturneController *sharedInstance = nil;

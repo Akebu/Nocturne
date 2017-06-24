@@ -32,6 +32,7 @@ void notcurneUITableViewFooterOriginalCall(id self, SEL _cmd, UITableView *table
 
 void notcurneCommonUITableViewCellModifications(id self, SEL _cmd, UITableViewCell *cell);
 void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UIView *view);
+void nocturneCommonUITableViewHeaderFooterModificationMethod(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *indePath);
 
 void nocturnePreferencesUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
@@ -41,9 +42,10 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 void nocturnePhoneUITableViewHeaderModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *index);
 
+void notcurneStoreUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath);
+
 @interface UITableViewController (nocturneExtension)
 - (void)nocturneCommonModificationForCell:(UITableViewCell *)cell;
-- (void)nocturneCommonModificationForHeaderFooterView:(UIView *)view;
 @end
 
 @interface UITableViewCell (background)
@@ -51,7 +53,8 @@ void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *
 @end
 
 @interface NocturneController : NSObject
-@property (nonatomic, assign, getter=isInTweakPref) BOOL tweakPref;
+@property (nonatomic, getter=isInTweakPref) BOOL tweakPref;
++ (NSAttributedString *)_replaceColorForAttributedString:(NSAttributedString *)oldString withColor:(UIColor *)color;
 + (id)sharedInstance;
 - (void)addPointerList:(NSPointerArray *)pointerArray forDelegate:(id)delegateClass;
 - (BOOL)classExists:(id)delegateClass;
@@ -72,6 +75,7 @@ void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *
 - (UIImage *)inverseColors;
 - (BOOL) isDark;
 - (UIImage *)setTintColor:(UIColor *)color;
++ (UIImage *)imageWithColor:(UIColor *)color;
 @end
 
 @interface PSListController : NSObject
@@ -85,10 +89,13 @@ void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *
 - (id)_titleTextField;
 @end
 
+@interface CHRecentCall : NSObject
+@property unsigned int callStatus;
+@end
+
 @interface PHRecentsCell : UITableViewCell
-{
-	UILabel *_callerNameLabel;
-}
+@property(readonly, assign) NSDictionary* allViews;
+@property(retain, nonatomic) CHRecentCall* call;
 @end
 
 @interface _UIContentUnavailableView : UIView
@@ -102,4 +109,22 @@ void nocturnePhoneUITableViewFooterModification(id self, SEL _cmd, UITableView *
 @property (nonatomic, retain) UIColor *indexBackgroundColor;
 @property (nonatomic, retain) UIColor *indexColor;
 @property (nonatomic, retain) UIColor *indexTrackingBackgroundColor;
+@end
+
+@interface ASUpdateCellLayout : UIView
+@end
+
+@interface ASUpdateTableViewCell : UITableViewCell
+-(ASUpdateCellLayout *)layout;
+@end
+
+@interface SKUIAccountButtonsView : UIView
+@property (nonatomic, readonly) UIButton *appleIDButton;
+@property (nonatomic, readonly) UIButton *giftingButton;
+@property (nonatomic, readonly) UIButton *redeemButton;
+@property (nonatomic, readonly) UIButton *termsAndConditionsButton;
+@end
+
+@interface UINavigationTransitionView : UIView
+@property (readonly) UIView *fromView;
 @end

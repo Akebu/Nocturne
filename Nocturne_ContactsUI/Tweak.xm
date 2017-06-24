@@ -10,6 +10,7 @@
 @end
 
 @interface CNContactListViewController : UITableViewController
+- (id)tableView:(id)arg1 cellForRowAtIndexPath:(id)arg2;
 @end
 
 %hook CNContactListBannerView
@@ -22,21 +23,27 @@
 }
 %end
 
+%hook CNContactListTableViewCell
+
+- (void)setHighlighted:(bool)isHighlighted animated:(bool)arg2
+{
+	if(isHighlighted)
+		self.backgroundColor = CellSelectedColor;
+	else
+		%orig;
+}
+
+%end
+
 %hook CNContactListViewController
 
-/*- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+- (void)tableView:(UITableView *)tableView willDisplayCell:(CNContactListTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	%orig;
+	[self nocturneCommonModificationForCell:cell];
+	if([cell isMeCard]){
+		cell.subviews[0].backgroundColor = [UIColor clearColor];
+	}
 }
-
-- (void)tableView:(UITableView *) willDisplayHeaderView:(UIView *)view forSection:(NSInteger *)index
-{
-	%orig;
-}
-
-- (void)tableView:(UITableView *) willDisplayFooterView:(UIView *)view forSection:(NSInteger *)index
-{
-	%orig;
-}*/
 
 %end

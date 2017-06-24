@@ -4,6 +4,22 @@
 
 @implementation UIImage (extention)
 
++ (UIImage *)imageWithColor:(UIColor *)color
+{
+    /* https://stackoverflow.com/a/14525049 */
+    CGRect rect = CGRectMake(0.0f, 0.0f, 1.0f, 1.0f);
+    UIGraphicsBeginImageContext(rect.size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+
+    CGContextSetFillColorWithColor(context, [color CGColor]);
+    CGContextFillRect(context, rect);
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return image;
+}
+
 - (UIImage *)setTintColor:(UIColor *)color
 {
 	UIImage *tintedImage = [self imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -25,7 +41,7 @@
 	return [UIImage imageWithCIImage:result scale:self.scale orientation:self.imageOrientation];	
 }
 
-- (BOOL) isDark
+- (BOOL)isDark
 {
     /* Modified version of http://stackoverflow.com/a/30732543 */
     CGImageRef image = self.CGImage;
@@ -53,7 +69,7 @@
         CGFloat green = ((GLubyte *)imageData)[byteIndex + 1]/255.0f;
         CGFloat blue = ((GLubyte *)imageData)[byteIndex + 2]/255.0f;
 
-        if( red > 0.3 || green > 0.3 || blue > 0.3){
+        if( red > 0.5 || green > 0.5 || blue > 0.5){
             isDark = NO;
             break;
         }

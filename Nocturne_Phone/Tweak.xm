@@ -50,7 +50,7 @@
 	UIImage *buttonImage = %orig;
 
 	if(isWhiteVersion)
-		return [buttonImage setTintColor:VeryLightTextColor];
+		return [buttonImage setTintColor:TextColor];
 	else
 		return [buttonImage setTintColor:VeryLightTextColor];
 }

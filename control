@@ -1,7 +1,7 @@
 Package: com.tonyciroussel.nocturne
 Name: Nocturne
 Depends: firmware (>= 7.0), mobilesubstrate
-Version: 0.1b
+Version: 0.2b
 Architecture: iphoneos-arm
 Description: Don't burn your eyes
 Maintainer: Tony Ciroussel

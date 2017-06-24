@@ -5,6 +5,7 @@ SUBPROJECTS += Nocturne_Preferences
 SUBPROJECTS += Nocturne_Phone
 SUBPROJECTS += Nocturne_ContactsUI
 SUBPROJECTS += Nocturne_PhotosUI
+SUBPROJECTS += Nocturne_StoreKitUI
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
 

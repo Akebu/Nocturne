@@ -41,27 +41,29 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 
 		NSPointerArray *pointerList = [[NSPointerArray alloc] initWithOptions:NSPointerFunctionsOpaqueMemory];
 
-		if([delegate respondsToSelector:@selector(tableView:willDisplayCell:forRowAtIndexPath:)]){
+		BOOL addClassForCell = class_addMethod([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, "@@:@@@");
+		class_addMethod([delegate class], @selector(nocturneCommonModificationForCell:), (IMP)notcurneCommonUITableViewCellModifications, "@@:@");
+
+		if(!addClassForCell){
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, (IMP *)&original_UITableViewDelegate_willDisplayCell_);
 			[pointerList addPointer:original_UITableViewDelegate_willDisplayCell_];
 		}else{
-			class_addMethod([delegate class], @selector(tableView:willDisplayCell:forRowAtIndexPath:), (IMP)customizeCellPtr, "@@:@@@");
 			[pointerList addPointer:nil];
 		}
 
-		if([delegate respondsToSelector:@selector(tableView:willDisplayHeaderView:forSection:)]){
+		BOOL addClassForHeaderView = class_addMethod([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, "@@:@@@");
+		if(!addClassForHeaderView && customizeHeaderPtr){
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, (IMP *)&original_UITableViewDelegate_HeaderView_);
 			[pointerList addPointer:original_UITableViewDelegate_HeaderView_];
 		}else{
-			class_addMethod([delegate class], @selector(tableView:willDisplayHeaderView:forSection:), (IMP)customizeHeaderPtr, "@@:@@@");
 			[pointerList addPointer:nil];
 		}
 
-		if([delegate respondsToSelector:@selector(tableView:willDisplayFooterView:forSection:)]){
+		BOOL addClassForFooterView = class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, "@@:@@@");
+		if(!addClassForFooterView && customizeFooterPtr){
 			MSHookMessageEx([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, (IMP *)&original_UITableViewDelegate_FooterView_);
 			[pointerList addPointer:original_UITableViewDelegate_FooterView_];
 		}else{
-			class_addMethod([delegate class], @selector(tableView:willDisplayFooterView:forSection:), (IMP)customizeFooterPtr, "@@:@@@");
 			[pointerList addPointer:nil];
 		}
 
@@ -166,14 +168,24 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 %end
 
 %hook UITabBar
-- (void)setBarTintColor:(UIColor *)color
+- (void)_setBackgroundView:(id)backgroundView
 {
-	 %orig(TableViewBackgroundColor);
+	return;
+}
+
+- (void)setBarStyle:(int)style
+{
+	%orig(UIBarStyleBlack);
 }
 
 - (void)setSelectedImageTintColor:(UIColor *)color
 {
 	%orig(BlueColor);
+}
+
+- (void)setTranslucent:(BOOL)arg1
+{
+	%orig(TRUE);
 }
 
 %end
@@ -201,6 +213,36 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 }
 %end
 
+%hook UICollectionView
+
+- (void)setBackgroundColor:(UIColor *)color
+{
+	%orig(TableViewBackgroundColor);
+}
+
+- (void)reloadData
+{
+	%orig;
+	self.backgroundColor = TableViewBackgroundColor;
+}
+
+%end
+
+%hook UINavigationTransitionView
+- (void)willMoveToSuperview:(UIView *)newSuperview
+{
+	%orig;
+	self.backgroundColor = TableViewBackgroundColor;
+}
+%end
+
+%hook UIActivityIndicatorView
+- (void)setColor:(UIColor *)color
+{
+	%orig(ColorWithWhite(0.70));
+}
+%end
+
 /* === === === */
 
 %end
@@ -222,8 +264,9 @@ void (*customizeFooterPtr)(id, SEL, UITableView *, UIView *, NSInteger *);
 
 void setDefaultColors()
 {
-	/* Use appearance, I don't want to block other tweak for theses objects*/
 	[UITabBar appearance].selectedImageTintColor = BlueColor;
+	[UITabBar appearance].barStyle = UIBarStyleBlack;
+	[UITabBar appearance].translucent = true;
 
 	[UINavigationBar appearance].barStyle = UIBarStyleBlackTranslucent;
 	[UINavigationBar appearance].tintColor = OrangeColor;
@@ -246,12 +289,15 @@ void setDefaultColors()
 %ctor
 {
 	NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
+	HBLogInfo(@"Load into %@", bundleID);
 	%init(Global);
 	if([bundleID hasPrefix:@"com.apple."]){
 
 		if([bundleID isEqualToString:@"com.apple.springboard"]){
 		}else{
 			%init(Applications);
+			customizeHeaderPtr = &nocturneCommonUITableViewHeaderFooterModificationMethod;
+			customizeFooterPtr = &nocturneCommonUITableViewHeaderFooterModificationMethod;
 
 			if([bundleID isEqualToString:@"com.apple.Preferences"]){
 				customizeCellPtr = &notcurnePreferencesUITableViewCellModifications;
@@ -263,6 +309,10 @@ void setDefaultColors()
 				%init(PhoneApp);
 				dlopen("/Library/MobileSubstrate/DynamicLibraries/Nocturne_ContactsUI.dylib", RTLD_NOW);
 				customizeCellPtr = &notcurnePhoneUITableViewCellModifications;
+			}
+			if([bundleID isEqualToString:@"com.apple.AppStore"])
+			{
+				customizeCellPtr = &notcurneStoreUITableViewCellModifications;
 			}
 			setDefaultColors();
 		}

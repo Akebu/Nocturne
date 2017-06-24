@@ -53,6 +53,11 @@ void nocturneCommonUITableViewHeaderFooterModification(id self, SEL _cmd, UIView
 	}
 }
 
+void nocturneCommonUITableViewHeaderFooterModificationMethod(id self, SEL _cmd, UITableView *tableView, UIView *view, NSInteger *indexPath)
+{
+	nocturneCommonUITableViewHeaderFooterModification(self, _cmd, view);
+}
+
 /* === === === */
 
 /* === Preferences.app === */
@@ -65,8 +70,7 @@ void notcurnePreferencesUITableViewCellModifications(id self, SEL _cmd, UITableV
 	if([[NocturneController sharedInstance] isInTweakPref]){
 		UIImage *icon = cell.imageView.image;
 		if([icon isDark]){
-			cell.imageView.image = [icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-			cell.imageView.tintColor = ColorWithWhite(0.80);
+			cell.imageView.image = [icon setTintColor:ColorWithWhite(0.80)];
 		}
 	}
 	if([cell class] == objc_getClass("PUAlbumListTableViewCell")){
@@ -109,27 +113,26 @@ void nocturnePreferencesUITableViewFooterModification(id self, SEL _cmd, UITable
 
 	if([[[view subviews] firstObject] class] == [UITextView class]){
 		UITextView *attributedTextView = [[view subviews] firstObject];
-		NSAttributedString *oldFooterAttributedString = [attributedTextView attributedText];
-		NSMutableAttributedString *footerAttributedString = [[NSMutableAttributedString alloc] initWithString:[oldFooterAttributedString string]];
-		[oldFooterAttributedString enumerateAttributesInRange:NSMakeRange(0, [oldFooterAttributedString length])
-			options:nil
-			usingBlock:^(NSDictionary<NSString *,id> *attrs, NSRange range, BOOL *stop)
-			{
-				for(id attribute in attrs){
-					if([NSStringFromClass([attrs[attribute] class]) isEqualToString:@"UICachedDeviceRGBColor"]){
-						[footerAttributedString addAttribute:attribute value:TableViewHeaderTextColor range:range];
-					}else{
-						[footerAttributedString addAttribute:attribute value:attrs[attribute] range:range];
-					}
-				}
-			}
-		];
-		attributedTextView.attributedText = footerAttributedString;
+		NSAttributedString *footerAttributedString = [attributedTextView attributedText];
+		attributedTextView.attributedText = [%c(NocturneController) _replaceColorForAttributedString:footerAttributedString withColor:TableViewHeaderTextColor];
 		attributedTextView.tintColor = BlueColor;
-		[footerAttributedString release];
 	}
 }
 
+/* === === === */
+
+/* === Store.app === */
+void notcurneStoreUITableViewCellModifications(id self, SEL _cmd, UITableView *tableView, UITableViewCell *cell, NSIndexPath *indexPath)
+{
+	notcurneUITableViewCellOriginalCall(self, _cmd, tableView, cell, indexPath);
+	notcurneCommonUITableViewCellModifications(self, _cmd, cell);
+	if([cell class] == objc_getClass("ASUpdateTableViewCell"))
+	{
+		ASUpdateCellLayout *cellLayout = [(ASUpdateTableViewCell *)cell layout];
+		MSHookIvar<UILabel *>(cellLayout, "_titleLabel").textColor = TextColor;
+		MSHookIvar<UILabel *>(cellLayout, "_versionLabel").textColor = LightTextColor;
+	}
+}
 /* === === === */
 
 /* === Phone.app === */
@@ -142,38 +145,44 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 		notcurneCommonUITableViewCellModifications(self, _cmd, cell);
 
 	if([cell class] == objc_getClass("PHRecentsCell")){
-		UILabel *callerName = MSHookIvar<UILabel *>(cell, "_callerNameLabel");
-		CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
-		[callerName.textColor getRed:&red green:&green blue:&blue alpha:&alpha];
-		UIColor *color = nil;
-
-		if(red == 1 && green < 0.5 && blue < 0.5)
-			color = RedColor;
-		else
-			color = TextColor;
-
-		callerName.textColor = color;
-		callerName.backgroundColor = [UIColor clearColor];
-
-		UILabel *callerCountLabel = MSHookIvar<UILabel *>(cell, "_callerCountLabel");
-		callerCountLabel.textColor = color;
-		callerCountLabel.backgroundColor = [UIColor clearColor];
-
-		UILabel *callerNameLabel = MSHookIvar<UILabel *>(cell, "_callerLabelLabel");
-		callerNameLabel.textColor = LightTextColor;
-		callerNameLabel.backgroundColor = [UIColor clearColor];
-
-		UILabel *callerDateLabel = MSHookIvar<UILabel *>(cell, "_callerDateLabel");
-		callerDateLabel.textColor = VeryLightTextColor;
-		callerDateLabel.backgroundColor = [UIColor clearColor];
-
-		UIImageView *callType = MSHookIvar<UIImageView *>(cell, "_callTypeIconView");
-		callType.image = [callType.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-		callType.tintColor = ColorWithWhite(1);
+		NSDictionary *allViews = [(PHRecentsCell *)cell allViews];
+		NSArray *allLabelKey = [allViews allKeys];
+		for(NSString *key in allLabelKey){
+			id view = [allViews objectForKey:key];
+			UIColor *color = nil;
+			if([key isEqualToString:@"Name"] || [key isEqualToString:@"Count"]){
+				CHRecentCall *recentCalls = ((PHRecentsCell *)cell).call;
+				if(recentCalls.callStatus == 8){
+					color = RedColor;
+				}else{
+					color = CellTextColor;
+				}
+			}
+			else if([key isEqualToString:@"Count"]){
+				color = CellTextColor;
+			}
+			else if([key isEqualToString:@"Label"]){
+				color = VeryLightTextColor;
+			}
+			else if([key isEqualToString:@"Date"]){
+				color = LightTextColor;
+			}
+			else if([key isEqualToString:@"CallTypeIcon"]){
+				((UIImageView *)view).image = [((UIImageView *)view).image setTintColor:ColorWithWhite(1)];
+				return;
+			}
+			else
+			{
+				color = LightTextColor;
+			}
+			((UILabel *)view).textColor = color;
+			((UILabel *)view).backgroundColor = [UIColor clearColor];
+		}
 	}
 	else if([cell class] == objc_getClass("PHFavoritesCell"))
 	{
 		cell.backgroundColor = TableViewBackgroundColor;
+		cell.contentView.backgroundColor = TableViewBackgroundColor;
 		MSHookIvar<UILabel *>(cell, "_titleTextLabel").textColor = TextColor;
 		MSHookIvar<UILabel *>(cell, "_labelTextLabel").textColor = LightTextColor;
 	}
@@ -221,3 +230,5 @@ void notcurnePhoneUITableViewCellModifications(id self, SEL _cmd, UITableView *t
 		countLabel.backgroundColor = [UIColor clearColor];
 	}
 }
+
+/* === === === */
